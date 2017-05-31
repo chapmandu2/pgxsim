@@ -1,6 +1,6 @@
 Package: pgxsim
 Title: Simulate Dose Response Curves For Pharmacogenomics Analysis
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: person("Phil", "Chapman", email =
     "phil.chapman@cruk.manchester.ac.uk", role = c("aut", "cre"))
 Description: More about what it does (maybe more than one line)
@@ -10,5 +10,6 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     dplyr,
-    stats
+    stats,
+    msm
 RoxygenNote: 6.0.1
