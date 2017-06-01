@@ -245,7 +245,57 @@ ggplot(nlme_pIC50s, aes(x=pIC50, y=nlme_pIC50)) +
 
 ## Using estimated IC50s in a linear regression
 
+### Original data
+
+Earlier in the simulation we defined the genetic covariate beta to equal 1, so a linear regression comparing mutated and wild type gives an estimate of around 1:
+
+```{r}
+lm(pIC50 ~ gene, data=pIC50_data)
+ggplot(pIC50_data, aes(x=as.factor(gene), y=pIC50)) +
+  geom_boxplot() +
+  theme_bw()
+```
+
+### `drc` pIC50 estimates
+
+To calculate the value of the genetic covariate from the pIC50 values estimated by `drc`, we can nest the `drc_results` data frame by simulation and carry out the linear regression on each simulation.  We then use `broom::tidy` to extract the genetic covariate estimate from the linear fit:
+
+```{r}
+drc_lm <- drc_results %>%
+  dplyr::select(-fit, -dr_data) %>%
+  dplyr::group_by(sim_no, sd_prop, sd_add) %>%
+  tidyr::nest() %>%
+  dplyr::mutate(lm_fit=purrr::map(data, ~lm(drc_pIC50 ~ gene, .)),
+                lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+  dplyr::select(-lm_fit, -data) %>%
+  tidyr::unnest() %>%
+  dplyr::filter(term=='gene')
+drc_lm
+```
+
+We see that our estimate of the genetic covariate is imprecise in the simulations where there is more noise in the data.
+
+### `nlme` pIC50 estimates
+
+We can carry out a similar analysis to that in the previous section on the nlme results:
+
+```{r}
+nlme_lm <- nlme_pIC50s %>%
+  dplyr::group_by(sim_no, sd_prop, sd_add) %>%
+  tidyr::nest() %>%
+  dplyr::mutate(lm_fit=purrr::map(data, ~lm(nlme_pIC50 ~ gene, .)),
+                lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+  dplyr::select(-lm_fit, -data) %>%
+  tidyr::unnest() %>%
+  dplyr::filter(term=='gene')
+nlme_lm
+```
+
+Although the standard errors are smaller and the statistical test for the covariate being non-zero is significant, the estimate of the covariate value is still a long way from 1.  Multiple simulations with the same amount of experimental variations would have to be carried out to get an estimate of how accurate the estimates are.
+
 ## Including the genetic effect in the mixed effects model
+
+
 
 # Session Info
 ```{r}
