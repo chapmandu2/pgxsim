@@ -24,6 +24,7 @@ A tibble containing cell line data
 Simulate a cell lines with predefined genetic characteristics
 }
 \examples{
+library(dplyr)
 sim_cell_lines(n=10, type='d', prop=0.2)
 sim_cell_lines(n=10, type='c')
 }

@@ -1,15 +1,19 @@
 Package: pgxsim
 Title: Simulate Dose Response Curves For Pharmacogenomics Analysis
-Version: 0.1.1
-Authors@R: person("Phil", "Chapman", email =
-    "phil.chapman@cruk.manchester.ac.uk", role = c("aut", "cre"))
+Version: 0.1.2
+Date: 2017-06-01
+Author: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
+Maintainer: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
+URL: https://github.com/chapmandu2/pgxsim
+BugReports: https://github.com/chapmandu2/pgxsim/issues
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
-LazyData: true
+LazyData: TRUE
 Imports:
     dplyr,
     stats,
-    msm
+    msm,
+    magrittr
 RoxygenNote: 6.0.1

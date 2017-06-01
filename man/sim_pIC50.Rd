@@ -4,7 +4,7 @@
 \alias{sim_pIC50}
 \title{Simulate pIC50 value}
 \usage{
-sim_pIC50(mu, sd, beta, g, n = 1, lb = -1.5, ub = Inf)
+sim_pIC50(mu, sd, beta, g, n = 1, type = "d", lb = -1.5, ub = Inf)
 }
 \arguments{
 \item{mu}{mean of the truncated normal distribution}
@@ -16,6 +16,8 @@ sim_pIC50(mu, sd, beta, g, n = 1, lb = -1.5, ub = Inf)
 \item{g}{value of the gene (0/1 for discrete or Z-value for continuous)}
 
 \item{n}{number of data points to generate (default is 1)}
+
+\item{type}{Whether genetic covariate is a discrete (d) or continuous (c) variable}
 
 \item{lb}{lower bound of the distribution}
 
@@ -29,8 +31,9 @@ Uses the truncated normal distribution from the msm package to simulate a pIC50
 value for a cell line.  Incorporates genetic covariate information.
 }
 \examples{
-sim_pIC50(1, 1, 0, 0)
-sim_pIC50(1, 1, 0, 0, n=10)
+library(dplyr)
+sim_pIC50(1, 1, 0, 0, type='d')
+sim_pIC50(1, 1, 0, 0, n=10, type='d')
 sim_cell_lines(n=10, type='d', prop=0.2) \%>\%
- dplyr::mutate(pIC50=sim_pIC50(1,1,beta=1,gene, n=n()))
+ dplyr::mutate(pIC50=sim_pIC50(1,1,beta=1,gene, n=n(), type='d'))
 }

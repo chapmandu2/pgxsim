@@ -9,9 +9,10 @@
 #' @param sd_add Cell line specific additive dose response variance
 #'
 #' @return A tibble containing cell line data
-#' @export
+#' @export sim_cell_lines
 #'
 #' @examples
+#' library(dplyr)
 #' sim_cell_lines(n=10, type='d', prop=0.2)
 #' sim_cell_lines(n=10, type='c')
 sim_cell_lines <- function(n, type='d', prop=0.2, sd_prop=0, sd_add=0) {
