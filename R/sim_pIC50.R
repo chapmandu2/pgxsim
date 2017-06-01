@@ -18,6 +18,7 @@
 #'
 #' @examples
 #' library(dplyr)
+#' set.seed(10000)
 #' sim_pIC50(1, 1, 0, 0, type='d')
 #' sim_pIC50(1, 1, 0, 0, n=10, type='d')
 #' sim_cell_lines(n=10, type='d', prop=0.2) %>%

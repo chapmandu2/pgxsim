@@ -25,6 +25,7 @@ Simulate a cell lines with predefined genetic characteristics
 }
 \examples{
 library(dplyr)
+set.seed(10000)
 sim_cell_lines(n=10, type='d', prop=0.2)
 sim_cell_lines(n=10, type='c')
 }

@@ -1,0 +1,78 @@
+---
+title: "Overview of the pgxsim package"
+author: "Phil Chapman"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{pgxsimOverview}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+Dose response curves are ubiquitous in the biomedical sciences and drug discovery, and conventionally are used in preclinical drug discovery to compare the response of a biological system to a different compounds.  Such assays have been extensively validated and optimised to produce highly accurate point estimates of IC50 which can then be correlated with chemical differences between the compounds.
+
+In oncology drug discovery, efforts have also been made to profile compounds in diverse biological models of interest.  Here the interest is not so much on explaining the difference in response between compounds, but the difference in response between models with different genetic characteristics.  An example of this approach is the profiling of over 200 compounds in ~1000 cancer cell lines the Genomics of Drug Sensitivity project carried out at the Wellcome Trust Sanger Centre.  
+
+The challenge in this setting is that achieving assay consistency between different cell lines is difficult, and variation in the data results in loss of signal in terms of the effect that genetic covariates have on response to compound.  Reproducibility between different projects has been discussed here, here and here (REFS).
+
+The pgxsim package provides functions to simulate dose response data given a known genetic effect on drug response.  It also provides functions to explore different methodologies to retrieve the genetic association.  Together these provide the basis to carry out simulation studies to inform experimental and analysis design.
+
+# Set Up
+
+Load required libaries etc:
+```{r, warning=FALSE, message=FALSE}
+library(pgxsim)
+library(tidyverse)
+set.seed(10001)
+```
+
+## Simulation of cell lines with mutation data
+
+First simulate 50 cell lines with a mutation at 20% frequency using the `sim_cell_lines` function:
+
+```{r}
+cl_data <- sim_cell_lines(n=100, type='discrete', prop=0.2)
+head(cl_data)
+cl_data %>% group_by(gene) %>% summarise(count=n())
+```
+
+Each cell line is scored 0 or 1 depending on whether it has the mutation or not.  Don't worry about the `cl_sd...` columns, these provide the ability to make dose response data from some cell lines more noisy than others.
+
+## Simulation of pIC50 data
+
+Having simulated some cell lines, we now want to simulate some estimates of pIC50.  This can be done using the `sim_pIC50` function as follows:
+
+```{r}
+sim_pIC50(mu=1, sd=0.1, beta=1, g=0, n=10, type='d')
+```
+Here we are providing an average value `mu`, a standard deviation `sd`, a `beta` value of 1 which is the size of the effect that we will eventually want to retrieve, and a value for `g` which determines whether or not the mutation is present.
+
+To see how this works compare the following:
+```{r}
+mean(sim_pIC50(mu=1, sd=0.1, beta=1, g=0, n=10, type='d'))
+mean(sim_pIC50(mu=1, sd=0.1, beta=1, g=1, n=10, type='d'))
+```
+The difference between the first (wild type) and second (mutant) set of cell lines is approximately 1 as expected from the value of `beta`.
+
+To include the values in the cell line data frame we can use the function as follows:
+
+```{r}
+pIC50_data <- cl_data %>% 
+  dplyr::mutate(pIC50 = sim_pIC50(mu=1, sd=0.1, beta=1, g=gene, n=nrow(cl_data), type='d'))
+pIC50_data
+```
+
+We can check the difference between cell lines:
+```{r}
+pIC50_data %>% group_by(gene) %>% summarise(mean(pIC50))
+ggplot(pIC50_data, aes(y=pIC50, x=as.factor(gene))) +
+  geom_boxplot(aes(colour=as.factor(gene))) + theme_bw()
+```
+
+To summarise, thus far we have simulated 100 cell lines with a mutation that exists at 20% frequency.  We have simulated pIC50 values for these cell lines given that the mutation confers a 10 fold difference on sensitivity to drug (10 fold is 1 on a log10 scale).  
+
+## Simulation of dose response data
+
+

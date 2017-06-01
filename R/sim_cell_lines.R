@@ -13,6 +13,7 @@
 #'
 #' @examples
 #' library(dplyr)
+#' set.seed(10000)
 #' sim_cell_lines(n=10, type='d', prop=0.2)
 #' sim_cell_lines(n=10, type='c')
 sim_cell_lines <- function(n, type='d', prop=0.2, sd_prop=0, sd_add=0) {

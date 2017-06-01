@@ -31,6 +31,7 @@ of doses, number of replicates per dose and additive and proportional variance
 }
 \examples{
 library(ggplot2)
+set.seed(10000)
 #no error
 ex1 <- sim_dose_response(1, 0.001, 30, 10, 3, 0, 0)
 ex1
