@@ -20,14 +20,18 @@ The challenge in this setting is that achieving assay consistency between differ
 The pgxsim package provides functions to simulate dose response data given a known genetic effect on drug response.  It also provides functions to explore different methodologies to retrieve the genetic association.  Together these provide the basis to carry out simulation studies to inform experimental and analysis design.
 
 # Set Up
-
-Load required libaries etc:
+## Load libraries
+Load required libraries etc:
 ```{r, warning=FALSE, message=FALSE}
 library(pgxsim)
 library(tidyverse)
 set.seed(10001)
 ```
 
+## About the tidyverse
+This vignette makes extensive use of the [tidyverse](http://www.tidyverse.org) suite of packages and concepts.  For an introduction see this [video on YouTube](https://www.youtube.com/watch?v=rz3_FDVt9eg) or read the [Managing Many Models section](http://r4ds.had.co.nz/many-models.html) of Hadley Wickham's R For Data Science book.. 
+
+# Simulating data
 ## Simulation of cell lines with mutation data
 
 First simulate 50 cell lines with a mutation at 20% frequency using the `sim_cell_lines` function:
@@ -69,10 +73,94 @@ We can check the difference between cell lines:
 pIC50_data %>% group_by(gene) %>% summarise(mean(pIC50))
 ggplot(pIC50_data, aes(y=pIC50, x=as.factor(gene))) +
   geom_boxplot(aes(colour=as.factor(gene))) + theme_bw()
+lm(pIC50 ~ as.factor(gene), data=pIC50_data)
 ```
 
-To summarise, thus far we have simulated 100 cell lines with a mutation that exists at 20% frequency.  We have simulated pIC50 values for these cell lines given that the mutation confers a 10 fold difference on sensitivity to drug (10 fold is 1 on a log10 scale).  
+To summarise, thus far we have simulated 100 cell lines with a mutation that exists at 20% frequency.  We have simulated pIC50 values for these cell lines given that the mutation confers a (average) 10 fold difference on sensitivity to drug (10 fold is 1 on a log10 scale).  
 
 ## Simulation of dose response data
 
+We next need to simulate the experimental data itself, namely the response seen when the cell line is treated with compound at different concentrations.  The `sim_dose_response` function can be used to do this as follows:
+
+```{r}
+ex_dr1 <- sim_dose_response(pIC50=1, lb=0.001, ub=30, 
+                            ndoses=10, nreps=1, sd_prop=0, sd_add=0)
+ex_dr1
+```
+Here we specify the pIC50 value, the lowest concentration tested `lb`, the highest concentration tested `ub`, the number of doses `ndoses`, the number of replicates per dose `nreps`, and the additive and proportional variance `sd_prop` and `sd_add`.  Since we specified zero variance, we get the perfect dose response curve:
+
+```{r}
+ggplot(ex_dr1, aes(x=conc, y=resp)) + geom_point() + geom_line() + scale_x_log10() + theme_bw()
+```
+
+By changing `sd_add` and `sd_prop` we can introduce experimental noise into the data:
+
+```{r}
+ex_dr2 <- sim_dose_response(pIC50=1, lb=0.001, ub=30, 
+                            ndoses=10, nreps=3, sd_prop=0.1, sd_add=0.1)
+ggplot(ex_dr2, aes(x=conc, y=resp)) + geom_smooth(se = FALSE, method='loess') + 
+  geom_point() + scale_x_log10() + theme_bw()
+
+```
+
+## Simulating data for multiple cell lines
+
+Data for the first 10 cell lines we simulated earlier can be generated using the `purrr::map` function to generate a nested data frame as follows:
+
+```{r}
+dr_data <- pIC50_data %>%
+  dplyr::filter(cell_id <= 10) %>%
+  dplyr::mutate(data=purrr::map(pIC50, ~sim_dose_response(pIC50=., lb=0.001, ub=30, 
+                            ndoses=10, nreps=3, sd_prop=0.1, sd_add=0.1)))
+dr_data
+dr_data$data[[1]]
+```
+
+This data frame can be unnested and the data plotted:
+
+```{r}
+dr_data_unnested <- tidyr::unnest(dr_data)
+dr_data_unnested
+ggplot(dr_data_unnested, aes(x=conc, y=resp)) + 
+  geom_point() +
+  scale_x_log10() +
+  facet_wrap(~cell_id) +
+  theme_bw()
+```
+
+## Simulating a full dataset
+
+The functions that `pgxsim` provides are controlled by a variety of parameters, and we would like to explore the effect that these parameters have when trying to retrieve the genetic association.  To start with we want to specify a data frame containing all of the combinations of parameters that we wish to explore.  The `tidy::crossing` function is useful to achieve this, below we set up four simulations with different values for the proportional and additive variance, but the same principle can be applied to vary other parameters.
+
+```{r}
+param_df <- tidyr::crossing(lb=0.001, ub=30, ndoses=10, 
+                            nreps=3, sd_prop=c(0.001, 0.2), 
+                            sd_add=c(0.001, 0.2)) %>%
+    dplyr::mutate(sim_no=row_number())
+param_df
+```
+
+Next this data frame is crossed with the pIC50 data frame from earlier to give four simulations for each cell line:
+
+```{r}
+simulation_df <- tidyr::crossing(pIC50_data, param_df)
+simulation_df
+```
+
+Finally we use the data in the data frame as parameters for the `sim_dose_response function:
+
+```{r}
+simulation_df <-  simulation_df %>% dplyr::mutate(
+  dr_data=purrr::pmap(.l=list(pIC50, lb, ub, ndoses, nreps, sd_prop, sd_add),
+                      .f=sim_dose_response))
+simulation_df %>% dplyr::select(sim_no, cell_id, dr_data)
+```
+The data for the first cell line is plotted below:
+
+```{r}
+simulation_df %>%
+  dplyr::filter(cell_id==1) %>%
+  tidyr::unnest() %>%
+  ggplot(aes(x=conc, y=resp)) + geom_point() + scale_x_log10() + facet_wrap(~sim_no)
+```
 
