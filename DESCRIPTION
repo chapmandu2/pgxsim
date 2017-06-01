@@ -1,11 +1,12 @@
 Package: pgxsim
 Title: Simulate Dose Response Curves For Pharmacogenomics Analysis
-Version: 0.1.5
+Version: 0.1.6
 Date: 2017-06-01
 Author: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
 Maintainer: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Description: Package to simulate dose response data from pharmacogenomics datasets where
+ the interest is in estimating genetic effects using pIC50 values from large cell line panel
+ screens.
 URL: https://github.com/chapmandu2/pgxsim
 BugReports: https://github.com/chapmandu2/pgxsim/issues
 License: GPL-3 + file LICENSE
@@ -18,7 +19,8 @@ Imports:
     magrittr,
     tidyr,
     ggplot2,
-    tibble
+    tibble,
+    nlme
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown

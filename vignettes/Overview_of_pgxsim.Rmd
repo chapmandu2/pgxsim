@@ -25,6 +25,7 @@ Load required libraries etc:
 ```{r, warning=FALSE, message=FALSE}
 library(pgxsim)
 library(tidyverse)
+library(drc)
 set.seed(10001)
 ```
 
@@ -152,7 +153,8 @@ Finally we use the data in the data frame as parameters for the `sim_dose_respon
 ```{r}
 simulation_df <-  simulation_df %>% dplyr::mutate(
   dr_data=purrr::pmap(.l=list(pIC50, lb, ub, ndoses, nreps, sd_prop, sd_add),
-                      .f=sim_dose_response))
+                      .f=sim_dose_response)) %>%
+  dplyr::select(sim_no, cell_id, gene, pIC50, sd_prop, sd_add, dr_data)
 simulation_df %>% dplyr::select(sim_no, cell_id, dr_data)
 ```
 The data for the first cell line is plotted below:
@@ -163,4 +165,91 @@ simulation_df %>%
   tidyr::unnest() %>%
   ggplot(aes(x=conc, y=resp)) + geom_point() + scale_x_log10() + facet_wrap(~sim_no)
 ```
+
+# Estimating pIC50 values from simulated data
+
+## Using drc to estimate IC50's one-at-a-time
+
+The `drc` package contains useful functions to fit conventional Hill curves to dose response data.  For example:
+
+```{r}
+fit <- drc::drm(resp~conc, fct=LL.4(), data=ex_dr2) 
+plot(fit)
+log(ED(fit, 50, display = FALSE))
+```
+
+This can be applied across multiple dose response datasets using `purrr::map` again:
+
+```{r warning=FALSE, message=FALSE}
+drc_results <- simulation_df %>%
+  dplyr::mutate(fit=purrr::map(dr_data, ~drc::drm(resp~conc, fct=LL.4(), data=.)),
+                drc_pIC50=purrr::map_dbl(fit, ~log(ED(., 50, display=FALSE)[1,'Estimate'])))
+drc_results %>% dplyr::select(-dr_data, -fit)
+```
+
+Plotting the derived pIC50s against the original pIC50s shows how much the different amounts of experimental variability affects the accuracy of the curve fit:
+```{r}
+ggplot(drc_results, aes(x=pIC50, y=drc_pIC50))+
+  geom_point() +
+  theme_bw() +
+  facet_wrap(~sim_no) +
+  geom_abline(slope=1, intercept=1, colour='blue')
+```
+
+## Using mixed effects models to estimate IC50's simultaneously
+
+Rather than estimating the IC50 values one by one, it is possible to estimate them in a single model fit using a non-linear mixed effects model (REF nlme).  For more information on this approach see a paper by Vis et al 2016 (REF).  Essentially the benefit here is that information on variability can be shared across cell lines which helps improve the accuracy of the fit.
+
+Firstly, the nesting needs to be adjusted so that there is one row per simulation rather than one row per cell line.  This means that the data frame in the data list column represents data for all cell lines in that simulation which is what the `nlme_fit` function requires:
+
+```{r}
+nlme_res <- simulation_df %>%
+  tidyr::unnest() %>%
+  dplyr::group_by(sim_no, sd_prop, sd_add) %>%
+  tidyr::nest()
+
+nlme_res
+```
+
+The fit can then be done using the convenience function `nlme_fit`:
+
+```{r}
+nlme_res <- nlme_res %>%
+  dplyr::mutate(fit=purrr::map(data, nlme_fit))
+nlme_res
+```
+The pIC50 values obtained can be extracted using the convenience function `nlme_extract` and merged with the original pIC50 values:
+
+```{r}
+nlme_pIC50s <- nlme_res %>%
+  dplyr::mutate(res=purrr::map(fit, nlme_extract)) %>%
+  dplyr::select(-data,-fit) %>%
+  tidyr::unnest() %>%
+  dplyr::inner_join(pIC50_data, by='cell_id') %>%
+  dplyr::select(-cl_sd_prop, -cl_sd_add)
+nlme_pIC50s
+```
+
+Finally the estimated vs actual values can be plotted:
+
+```{r}
+ggplot(nlme_pIC50s, aes(x=pIC50, y=nlme_pIC50)) +
+  geom_point() +
+  theme_bw() +
+  facet_wrap(~sim_no) +
+  geom_abline(slope=1, intercept=1, colour='blue')
+```
+
+
+# Estimating genetic effects
+
+## Using estimated IC50s in a linear regression
+
+## Including the genetic effect in the mixed effects model
+
+# Session Info
+```{r}
+sessionInfo()
+```
+
 
