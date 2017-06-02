@@ -203,18 +203,18 @@ Rather than estimating the IC50 values one by one, it is possible to estimate th
 Firstly, the nesting needs to be adjusted so that there is one row per simulation rather than one row per cell line.  This means that the data frame in the data list column represents data for all cell lines in that simulation which is what the `nlme_fit` function requires:
 
 ```{r}
-nlme_res <- simulation_df %>%
+nlme_data <- simulation_df %>%
   tidyr::unnest() %>%
   dplyr::group_by(sim_no, sd_prop, sd_add) %>%
   tidyr::nest()
 
-nlme_res
+nlme_data
 ```
 
 The fit can then be done using the convenience function `nlme_fit`:
 
 ```{r}
-nlme_res <- nlme_res %>%
+nlme_res <- nlme_data %>%
   dplyr::mutate(fit=purrr::map(data, nlme_fit))
 nlme_res
 ```
@@ -295,7 +295,27 @@ Although the standard errors are smaller and the statistical test for the covari
 
 ## Including the genetic effect in the mixed effects model
 
+In the previous section, recovering the genetic effect was a two stage process of first estimating pIC50 and then using this in a linear regression.  However, this approach discards the variability associated with the pIC50 point estimates.  This uncertainty can be retained by instead including the genetic covariate in the mixed effects model itself.  
 
+The function `nlme_gene_fit` is used to fit this model:
+
+```{r}
+nlme_gene_res <- nlme_data %>%
+  dplyr::mutate(fit=purrr::map(data, nlme_gene_fit))
+nlme_gene_res
+```
+
+Since the genetic covariate is included in the model, the estimate can be retrieved directly:
+
+```{r}
+nlme_gene_res %>%
+    dplyr::mutate(res=map(fit, broom::tidy, effects='fixed')) %>%
+    dplyr::select(-data, -fit) %>%
+    tidyr::unnest() %>%
+    dplyr::filter(grepl('b', term)) 
+```
+
+Using this approach, the estimate of the genetic effect is near 1 for all simulations, even where a lot of experimental variability is present.
 
 # Session Info
 ```{r}

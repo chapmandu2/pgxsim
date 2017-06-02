@@ -2,6 +2,7 @@
 
 export(nlme_extract)
 export(nlme_fit)
+export(nlme_gene_fit)
 export(sim_cell_lines)
 export(sim_dose_response)
 export(sim_pIC50)

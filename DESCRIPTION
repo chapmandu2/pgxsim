@@ -1,7 +1,7 @@
 Package: pgxsim
 Title: Simulate Dose Response Curves For Pharmacogenomics Analysis
-Version: 0.1.7
-Date: 2017-06-01
+Version: 0.1.8
+Date: 2017-06-02
 Author: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
 Maintainer: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
 Description: Package to simulate dose response data from pharmacogenomics datasets where
