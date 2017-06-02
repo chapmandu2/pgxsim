@@ -7,7 +7,7 @@
 nlme_extract(fit)
 }
 \arguments{
-\item{fit}{}
+\item{fit}{output from \code{\link{nlme_fit}}}
 }
 \value{
 data frame of values
@@ -16,5 +16,8 @@ data frame of values
 Extract the pIC50 values from an nlme fit.
 }
 \examples{
-#
+data(drc_data_small)
+fit <- nlme_fit(drc_data_small)
+fit
+nlme_extract(fit)
 }

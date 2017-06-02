@@ -1,8 +1,12 @@
 ---
 title: "Overview of the pgxsim package"
-author: "Phil Chapman"
+author: "Phil Chapman and Hitesh Mistry"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    number_sections: yes
+    toc: yes
+    toc_depth: '3'
 vignette: >
   %\VignetteIndexEntry{pgxsimOverview}
   %\VignetteEngine{knitr::rmarkdown}
@@ -13,9 +17,9 @@ vignette: >
 
 Dose response curves are ubiquitous in the biomedical sciences and drug discovery, and conventionally are used in preclinical drug discovery to compare the response of a biological system to a different compounds.  Such assays have been extensively validated and optimised to produce highly accurate point estimates of IC50 which can then be correlated with chemical differences between the compounds.
 
-In oncology drug discovery, efforts have also been made to profile compounds in diverse biological models of interest.  Here the interest is not so much on explaining the difference in response between compounds, but the difference in response between models with different genetic characteristics.  An example of this approach is the profiling of over 200 compounds in ~1000 cancer cell lines the Genomics of Drug Sensitivity project carried out at the Wellcome Trust Sanger Centre.  
+In oncology drug discovery, efforts have also been made to profile compounds in diverse biological models of interest.  Here the interest is not so much on explaining the difference in response between compounds, but the difference in response between models with different genetic characteristics.  An example of this approach is the profiling of over 200 compounds in ~1000 cancer cell lines the [Genomics of Drug Sensitivity in Cancer project](http://www.cancerrxgene.org/) carried out at the Wellcome Trust Sanger Centre.  
 
-The challenge in this setting is that achieving assay consistency between different cell lines is difficult, and variation in the data results in loss of signal in terms of the effect that genetic covariates have on response to compound.  Reproducibility between different projects has been discussed here, here and here (REFS).
+The challenge in this setting is that achieving assay consistency between different cell lines is difficult, and variation in the data results in loss of signal in terms of the effect that genetic covariates have on response to compound.  Reproducibility between different projects was raised as an issue in a [2013 Nature paper](http://dx.doi.org/10.1038/nature12831) by Benjamin Haibe-Kains, and subsequently debated [here](http://www.nature.com/nature/journal/v528/n7580/full/nature15736.html) and [here](https://f1000research.com/articles/5-825/v1).
 
 The pgxsim package provides functions to simulate dose response data given a known genetic effect on drug response.  It also provides functions to explore different methodologies to retrieve the genetic association.  Together these provide the basis to carry out simulation studies to inform experimental and analysis design.
 
@@ -26,6 +30,7 @@ Load required libraries etc:
 library(pgxsim)
 library(tidyverse)
 library(drc)
+library(purrr)
 set.seed(10001)
 ```
 
@@ -131,7 +136,7 @@ ggplot(dr_data_unnested, aes(x=conc, y=resp)) +
 
 ## Simulating a full dataset
 
-The functions that `pgxsim` provides are controlled by a variety of parameters, and we would like to explore the effect that these parameters have when trying to retrieve the genetic association.  To start with we want to specify a data frame containing all of the combinations of parameters that we wish to explore.  The `tidy::crossing` function is useful to achieve this, below we set up four simulations with different values for the proportional and additive variance, but the same principle can be applied to vary other parameters.
+The functions that `pgxsim` provides are controlled by a variety of parameters, and we would like to explore the effect that these parameters have when trying to retrieve the genetic association.  To start with we want to specify a data frame containing all of the combinations of parameters that we wish to explore.  The `tidyr::crossing` function is useful to achieve this, below we set up four simulations with different values for the proportional and additive variance, but the same principle can be applied to vary other parameters.
 
 ```{r}
 param_df <- tidyr::crossing(lb=0.001, ub=30, ndoses=10, 

@@ -12,5 +12,6 @@
 #' @docType package
 #' @name pgxsim-package
 #' @aliases pgxsim
-#' @author Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
+#' @author Phil Chapman <phil.chapman@cruk.manchester.ac.uk>,
+#'     Hitesh Mistry <hitesh.mistry@manchester.ac.uk>
 NULL

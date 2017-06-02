@@ -13,8 +13,12 @@ nlme_fit(df)
 an object of class `nlme` representing the nonlinea mixed-effects model fit.
 }
 \description{
-Fit a dose response curve using \pkg{nlme}
+Fit a dose response curve using \pkg{nlme}.  Estimated pIC50 values can be extracted from
+the fit using the \code{\link{nlme_extract}} function.
 }
 \examples{
-#
+data(drc_data_small)
+fit <- nlme_fit(drc_data_small)
+fit
+nlme_extract(fit)
 }

@@ -12,5 +12,6 @@ Package to simulate Pharmacogenomics dose response data
 To open the vignette type \code{vignette("Overview_of_pgxsim")}
 }
 \author{
-Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
+Phil Chapman <phil.chapman@cruk.manchester.ac.uk>,
+    Hitesh Mistry <hitesh.mistry@manchester.ac.uk>
 }
