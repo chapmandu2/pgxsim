@@ -4,7 +4,8 @@
 \alias{sim_cell_lines}
 \title{Simulate Cell Lines}
 \usage{
-sim_cell_lines(n, type = "d", prop = 0.2, sd_prop = 0, sd_add = 0)
+sim_cell_lines(n, type = "d", prop = 0.2, mu = 1, sd = 0.1, beta = 1,
+  pr = 0.9, lb = -1.5, ub = Inf, sd_prop = 0, sd_add = 0)
 }
 \arguments{
 \item{n}{Number of cell lines to simulate}
@@ -12,6 +13,18 @@ sim_cell_lines(n, type = "d", prop = 0.2, sd_prop = 0, sd_add = 0)
 \item{type}{Whether genetic covariate is a discrete (d) or continuous (c) variable}
 
 \item{prop}{Proportion of cell lines with a discrete characteristic}
+
+\item{mu}{mean of the truncated normal distribution}
+
+\item{sd}{standard deviation of the truncated normal distribution}
+
+\item{beta}{value of the genetic coefficient to recover - note that this is on a log scale}
+
+\item{pr}{value of correlation coefficient (0-1 for continuous, ignored for discrete)}
+
+\item{lb}{lower bound of the distribution}
+
+\item{ub}{upper bound of the distribution}
 
 \item{sd_prop}{Cell line specific proportional dose response variance}
 
@@ -21,11 +34,11 @@ sim_cell_lines(n, type = "d", prop = 0.2, sd_prop = 0, sd_add = 0)
 A tibble containing cell line data
 }
 \description{
-Simulate a cell lines with predefined genetic characteristics
+Simulate cell lines with predefined genetic and drug response characteristics.
 }
 \examples{
 library(dplyr)
 set.seed(10000)
-sim_cell_lines(n=10, type='d', prop=0.2)
-sim_cell_lines(n=10, type='c')
+sim_cell_lines(n=10, type='d', prop=0.2, mu=1, sd=0.1, beta=1)
+sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, pr=0.6)
 }
