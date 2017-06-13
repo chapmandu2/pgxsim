@@ -5,10 +5,10 @@
 #' @param n Number of cell lines to simulate
 #' @param type Whether genetic covariate is a discrete (d) or continuous (c) variable
 #' @param prop Proportion of cell lines with a discrete characteristic
+#' @param prho value of correlation coefficient (0-1 for continuous, ignored for discrete)
 #' @param mu mean of the truncated normal distribution
 #' @param sd standard deviation of the truncated normal distribution
 #' @param beta value of the genetic coefficient to recover - note that this is on a log scale
-#' @param pr value of correlation coefficient (0-1 for continuous, ignored for discrete)
 #' @param lb lower bound of the distribution
 #' @param ub upper bound of the distribution
 #' @param sd_prop Cell line specific proportional dose response variance
@@ -22,7 +22,7 @@
 #' set.seed(10000)
 #' sim_cell_lines(n=10, type='d', prop=0.2, mu=1, sd=0.1, beta=1)
 #' sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, pr=0.6)
-sim_cell_lines <- function(n, type='d', prop=0.2, mu=1, sd=0.1, beta=1, pr=0.9, lb=-1.5, ub=Inf, sd_prop=0, sd_add=0) {
+sim_cell_lines <- function(n, type='d', prop=0.2, prho=0.9, mu=1, sd=0.1, beta=1, lb=-1.5, ub=Inf, sd_prop=0, sd_add=0) {
 
   if(grepl(paste0('^',type),'discrete')) {
 
@@ -33,8 +33,8 @@ sim_cell_lines <- function(n, type='d', prop=0.2, mu=1, sd=0.1, beta=1, pr=0.9, 
 
   } else if (grepl(paste0('^',type),'continuous')) {
 
-    sigma <- matrix(c(sd^2,pr*(sd*1),
-                      pr*(sd*1),1^2), ncol=2)
+    sigma <- matrix(c(sd^2,prho*(sd*1),
+                      prho*(sd*1),1^2), ncol=2)
     res <- mvtnorm::rmvnorm(n=n, mean=c(mu,0), sigma=sigma)
     gene <- res[,2]
     pIC50 <- res[,1]

@@ -4,8 +4,8 @@
 \alias{sim_cell_lines}
 \title{Simulate Cell Lines}
 \usage{
-sim_cell_lines(n, type = "d", prop = 0.2, mu = 1, sd = 0.1, beta = 1,
-  pr = 0.9, lb = -1.5, ub = Inf, sd_prop = 0, sd_add = 0)
+sim_cell_lines(n, type = "d", prop = 0.2, prho = 0.9, mu = 1,
+  sd = 0.1, beta = 1, lb = -1.5, ub = Inf, sd_prop = 0, sd_add = 0)
 }
 \arguments{
 \item{n}{Number of cell lines to simulate}
@@ -14,13 +14,13 @@ sim_cell_lines(n, type = "d", prop = 0.2, mu = 1, sd = 0.1, beta = 1,
 
 \item{prop}{Proportion of cell lines with a discrete characteristic}
 
+\item{prho}{value of correlation coefficient (0-1 for continuous, ignored for discrete)}
+
 \item{mu}{mean of the truncated normal distribution}
 
 \item{sd}{standard deviation of the truncated normal distribution}
 
 \item{beta}{value of the genetic coefficient to recover - note that this is on a log scale}
-
-\item{pr}{value of correlation coefficient (0-1 for continuous, ignored for discrete)}
 
 \item{lb}{lower bound of the distribution}
 

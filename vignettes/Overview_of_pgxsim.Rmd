@@ -38,9 +38,9 @@ set.seed(10001)
 This vignette makes extensive use of the [tidyverse](http://www.tidyverse.org) suite of packages and concepts.  For an introduction see this [video on YouTube](https://www.youtube.com/watch?v=rz3_FDVt9eg) or read the [Managing Many Models section](http://r4ds.had.co.nz/many-models.html) of Hadley Wickham's R For Data Science book.. 
 
 # Simulating data
-## Simulation of cell lines with mutation data
+## Simulation of cell lines with mutation and dose response data
 
-First simulate 50 cell lines with a mutation at 20% frequency using the `sim_cell_lines` function:
+First simulate 100 cell lines with a mutation at 20% frequency using the `sim_cell_lines` function:
 
 ```{r}
 cl_data <- sim_cell_lines(n=100, type='discrete', prop=0.2)
@@ -48,11 +48,11 @@ head(cl_data)
 cl_data %>% group_by(gene) %>% summarise(count=n())
 ```
 
-Each cell line is scored 0 or 1 depending on whether it has the mutation or not.  Don't worry about the `cl_sd...` columns, these provide the ability to make dose response data from some cell lines more noisy than others.
+Each cell line is scored 0 or 1 depending on whether it has the mutation or not.  Don't worry about the `cl_sd...` columns, these provide the ability to make dose response data from some cell lines more noisy than others.  Although we haven't provided any information on drug response, pIC50 values are also simulated.
 
 ## Simulation of pIC50 data
 
-Having simulated some cell lines, we now want to simulate some estimates of pIC50.  This can be done using the `sim_pIC50` function as follows:
+To explore how the pIC50 values are simulated further, let's seperate out this part of the simulation using the `sim_pIC50` function as follows:
 
 ```{r}
 sim_pIC50(mu=1, sd=0.1, beta=1, g=0, n=10, type='d')
@@ -74,6 +74,7 @@ pIC50_data <- cl_data %>%
 pIC50_data
 ```
 
+
 We can check the difference between cell lines:
 ```{r}
 pIC50_data %>% group_by(gene) %>% summarise(mean(pIC50))
@@ -82,11 +83,46 @@ ggplot(pIC50_data, aes(y=pIC50, x=as.factor(gene))) +
 lm(pIC50 ~ as.factor(gene), data=pIC50_data)
 ```
 
-To summarise, thus far we have simulated 100 cell lines with a mutation that exists at 20% frequency.  We have simulated pIC50 values for these cell lines given that the mutation confers a (average) 10 fold difference on sensitivity to drug (10 fold is 1 on a log10 scale).  
+Alternatively this can be done in one step using the `sim_cell_lines` function.  The dataset will of course be slightly different as this is a new simulation!:
+
+```{r}
+pIC50_data2 <- sim_cell_lines(n=100, type='d', prop=0.2, mu=1, sd=0.1, beta=1)
+pIC50_data2 %>% group_by(gene) %>% summarise(mean(pIC50))
+lm(pIC50 ~ as.factor(gene), data=pIC50_data2)
+
+```
+
+
+To summarise, thus far we have simulated 100 cell lines with a mutation that exists at 20% frequency.  We have simulated pIC50 values for these cell lines given that the mutation confers a (average) 10 fold difference on sensitivity to drug (10 fold is 1 on a log10 scale).   
+
+## Simulation of cell lines with gene expression and dose response data
+In addition to simulating cell lines with a discrete genetic feature such as a mutation, we can also simulate cell lines with a continuous genetic feature such as gene expression.  In this case we simulate both the (standardised) genetic feature value and the pIC50 at the same time as a multivariate distribution, and specify a value of Pearson's Correlation Coefficient to indicate how correlated the two are:
+
+```{r}
+pIC50_exp_data <- sim_cell_lines(n=500, type='c', mu=1, sd=0.1, prho=sqrt(0.6))
+pIC50_exp_data
+```
+
+The relationship can be visualised below:
+
+```{r}
+ggplot(pIC50_exp_data, aes(gene, pIC50)) + 
+  geom_point() +
+  geom_smooth(method='lm') +
+  theme_bw()
+```
+
+We can extract the slope parameter and (squared) correlation coefficient by fitting a linear model:
+
+```{r}
+lm(pIC50~gene, data=pIC50_exp_data) %>% summary()
+```
+
+In this case the linear regression coefficient is less immediately useful since the genetic feature data is standardised.  We are interested in whether it is non-zero and what the estimate of the correlation coefficient is.
 
 ## Simulation of dose response data
 
-We next need to simulate the experimental data itself, namely the response seen when the cell line is treated with compound at different concentrations.  The `sim_dose_response` function can be used to do this as follows:
+We now need to simulate the experimental data itself, namely the response seen when the cell line is treated with compound at different concentrations.  This is done in the same way regardless of how the pIC50 values were generated.  The `sim_dose_response` function can be used to do this as follows:
 
 ```{r}
 ex_dr1 <- sim_dose_response(pIC50=1, lb=0.001, ub=30, 
