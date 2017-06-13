@@ -19,7 +19,9 @@
 sim_cell_lines <- function(n, type='d', prop=0.2, sd_prop=0, sd_add=0) {
 
   if(grepl(paste0('^',type),'discrete')) {
-    gene <- as.numeric(stats::runif(n)<prop)
+    gene <- rep(0,n)
+    idx <- sample(seq_len(n), prop*n)
+    gene[idx] <- 1
   } else if (grepl(paste0('^',type),'continuous')) {
     gene <- stats::rnorm(n)
   } else {
