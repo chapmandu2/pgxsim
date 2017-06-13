@@ -40,6 +40,25 @@ do_simulation_type1 <- function(df) {
     dplyr::filter(term=='gene') %>%
     dplyr::mutate(method='lm')
 
+  #then do nls plus lm
+  nls_res <- sim_dr_data %>%
+    dplyr::select(sim_unique_id, cell_id, gene, pIC50, dr_data)  %>%
+    dplyr::mutate(fit=purrr::map(dr_data, nls_fit),
+                  res=purrr::map(fit, broom::tidy)) %>%
+    dplyr::select(-dr_data,-fit) %>%
+    tidyr::unnest()
+
+  nls_lm_res <- nls_res %>%
+    dplyr::select(sim_unique_id, cell_id, estimate, gene) %>%
+    dplyr::group_by(sim_unique_id) %>%
+    tidyr::nest() %>%
+    dplyr::mutate(lm_fit=purrr::map(data, ~stats::lm(estimate ~ gene, .)),
+                  lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+    dplyr::select(-lm_fit, -data) %>%
+    tidyr::unnest() %>%
+    dplyr::filter(term=='gene') %>%
+    dplyr::mutate(method='nls_lm')
+
 
   #then do nlme plus lm
   nlme_res <- sim_dr_data_calc %>%
@@ -70,7 +89,7 @@ do_simulation_type1 <- function(df) {
     dplyr::mutate(method='nlme_gene')
 
   #combine all results
-  combo_res <- bind_rows(lm_res, nlme_lm_res, nlme_gene_res) %>%
+  combo_res <- bind_rows(lm_res, nlme_lm_res, nls_lm_res, nlme_gene_res) %>%
     dplyr::inner_join(df, by='sim_unique_id') %>%
     dplyr::select(-type, -mu, -sd, -sd_prop, -sd_add)
 

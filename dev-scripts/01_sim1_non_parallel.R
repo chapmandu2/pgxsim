@@ -9,7 +9,7 @@ complete_df <- crossing(fixed_df, varying_df, sim_rep=c(1:3)) %>%
   dplyr::mutate(sim_unique_id=row_number())
 
 sim_cl_data <- complete_df %>%
-  dplyr::sample_n(10) %>%
+  dplyr::sample_n(2) %>%
   dplyr::mutate(cl_data=purrr::pmap(.l=list(n, type, prop), .f=sim_cell_lines)) %>%
   tidyr::unnest() %>%
   dplyr::select(-cl_sd_prop, -cl_sd_add) %>%
@@ -38,6 +38,24 @@ lm_res <- sim_cl_data %>%
   dplyr::filter(term=='gene') %>%
   dplyr::mutate(method='lm')
 
+#nls plus lm
+nls_res <- sim_dr_data %>%
+  dplyr::select(sim_unique_id, cell_id, gene, pIC50, dr_data)  %>%
+  dplyr::mutate(fit=purrr::map(dr_data, nls_fit),
+                res=purrr::map(fit, broom::tidy)) %>%
+  dplyr::select(-dr_data,-fit) %>%
+  tidyr::unnest()
+
+nls_lm_res <- nls_res %>%
+  dplyr::select(sim_unique_id, cell_id, estimate, gene) %>%
+  dplyr::group_by(sim_unique_id) %>%
+  tidyr::nest() %>%
+  dplyr::mutate(lm_fit=purrr::map(data, ~stats::lm(estimate ~ gene, .)),
+                lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+  dplyr::select(-lm_fit, -data) %>%
+  tidyr::unnest() %>%
+  dplyr::filter(term=='gene') %>%
+  dplyr::mutate(method='nls_lm')
 
 #then do nlme plus lm
 nlme_res <- sim_dr_data_calc %>%
@@ -68,7 +86,7 @@ nlme_gene_res <- sim_dr_data_calc %>%
   dplyr::mutate(method='nlme_gene')
 
 #combine all results
-combo_res <- bind_rows(lm_res, nlme_lm_res, nlme_gene_res) %>%
+combo_res <- bind_rows(lm_res, nls_lm_res, nlme_lm_res, nlme_gene_res) %>%
   inner_join(complete_df, by='sim_unique_id') %>%
   dplyr::select(-type, -mu, -sd, -sd_prop, -sd_add)
 

@@ -4,12 +4,14 @@ library(tidyverse)
 #prepare a data frame
 fixed_df <- data_frame(type='discrete', mu=1, lb=0.001, ub=30, ndoses=10, nreps=3, sd_prop=0.3, sd_add=0.15)
 varying_df <- crossing(sd=c(0.1, 0.5, 2), n=c(50, 200, 800), prop=c(0.05,0.1,0.2), beta=log10(c(2,5,10))) %>%
+#varying_df <- crossing(sd=c(0.1,2), n=c(50, 200), prop=c(0.05,0.2), beta=log10(c(2,5,10))) %>%
   dplyr::mutate(sim_group=row_number())
 complete_df <- crossing(fixed_df, varying_df, sim_rep=c(1:10)) %>%
   dplyr::mutate(sim_unique_id=row_number(),
-                batch=sample(1:128, n(), replace = TRUE))
+                batch=sample(1:32, n(), replace = TRUE))
 
-#subset_apply(6, complete_df, do_simulation_type1)i
+#do_simulation_type1(dplyr::sample_n(complete_df, 10))
+#subset_apply(6, complete_df, do_simulation_type1)
 
 # process in parallel using batchtools -------------------------------------
 
