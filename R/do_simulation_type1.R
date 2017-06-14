@@ -34,7 +34,8 @@ do_simulation_type1 <- function(df) {
     dplyr::group_by(sim_unique_id) %>%
     tidyr::nest() %>%
     dplyr::mutate(lm_fit=purrr::map(data, ~stats::lm(pIC50 ~ gene, .)),
-                  lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+                  lm_res=purrr::map(lm_fit, broom::tidy),
+                  rowcount=purrr::map_dbl(data, nrow)) %>%
     dplyr::select(-lm_fit, -data) %>%
     tidyr::unnest() %>%
     dplyr::filter(term=='gene') %>%
@@ -53,7 +54,8 @@ do_simulation_type1 <- function(df) {
     dplyr::group_by(sim_unique_id) %>%
     tidyr::nest() %>%
     dplyr::mutate(lm_fit=purrr::map(data, ~stats::lm(estimate ~ gene, .)),
-                  lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+                  lm_res=purrr::map(lm_fit, broom::tidy),
+                  rowcount=purrr::map_dbl(data, nrow)) %>%
     dplyr::select(-lm_fit, -data) %>%
     tidyr::unnest() %>%
     dplyr::filter(term=='gene') %>%
@@ -73,7 +75,8 @@ do_simulation_type1 <- function(df) {
     dplyr::group_by(sim_unique_id) %>%
     tidyr::nest() %>%
     dplyr::mutate(lm_fit=purrr::map(data, ~stats::lm(nlme_pIC50 ~ gene, .)),
-                  lm_res=purrr::map(lm_fit, broom::tidy)) %>%
+                  lm_res=purrr::map(lm_fit, broom::tidy),
+                  rowcount=purrr::map_dbl(data, nrow)) %>%
     dplyr::select(-lm_fit, -data) %>%
     tidyr::unnest() %>%
     dplyr::filter(term=='gene') %>%
@@ -82,7 +85,8 @@ do_simulation_type1 <- function(df) {
   #finally do nlme
   nlme_gene_res <- sim_dr_data_calc %>%
     dplyr::mutate(fit=purrr::map(data, nlme_gene_fit)) %>%
-    dplyr::mutate(res=map(fit, broom::tidy, effects='fixed')) %>%
+    dplyr::mutate(res=map(fit, broom::tidy, effects='fixed'),
+                  rowcount=purrr::map_dbl(data, nrow)) %>%
     dplyr::select(-data, -fit) %>%
     tidyr::unnest() %>%
     dplyr::filter(grepl('b', term)) %>%

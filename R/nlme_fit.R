@@ -15,9 +15,9 @@
 #' nlme_extract(fit)
 nlme_fit <- function(df) {
   df <- nlme::groupedData(resp~conc|cell_id,data=df)
-  nlme::nlme(resp~1-conc/(exp(ic50)+conc),
+  nlme::nlme(resp~1-conc/(10^(ic50)+conc),
        fixed = ic50~1, random = nlme::pdDiag(ic50 ~1),
-       data = df, start = 1,method='ML',
+       data = df, start = 0,method='ML',
        verbose = FALSE, control =nlme::nlmeControl(pnlsMaxIter=10,tolerance=1e0)
   )
 

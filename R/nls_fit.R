@@ -18,9 +18,9 @@
 #' broom::tidy(fit)
 nls_fit <- function(df) {
   res <- try(
-    minpack.lm::nlsLM(resp~1-conc/(exp(ic50)+conc),
+    minpack.lm::nlsLM(resp~1-conc/(10^(ic50)+conc),
                       data=df,
-                      start = c(ic50=1)),
+                      start = c(ic50=0)),
     silent=TRUE)
 
   if(inherits(res, 'try-error')) {

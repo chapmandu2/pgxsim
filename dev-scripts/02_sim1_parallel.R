@@ -10,8 +10,8 @@ complete_df <- crossing(fixed_df, varying_df, sim_rep=c(1:10)) %>%
   dplyr::mutate(sim_unique_id=row_number(),
                 batch=sample(1:32, n(), replace = TRUE))
 
-#do_simulation_type1(dplyr::sample_n(complete_df, 10))
-#subset_apply(6, complete_df, do_simulation_type1)
+#test1 <- do_simulation_type1(dplyr::sample_n(complete_df, 5))
+#test2 <- subset_apply(6, complete_df, do_simulation_type1)
 
 # process in parallel using batchtools -------------------------------------
 
@@ -60,13 +60,13 @@ removeRegistry(reg, ask='no')
 # explore results
 #estimates
 ggplot(res_df, aes(as.factor(round(beta,2)), estimate, colour=method)) +
-  geom_boxplot() +
+  geom_boxplot(outlier.size = 0) +
   facet_grid(prop~sd+n) + ylim(-1,2) +
   theme_bw()
 
 #p values
 ggplot(res_df, aes(as.factor(round(beta,2)), -log10(p.value), colour=method)) +
-  geom_boxplot() +
+  geom_boxplot(outlier.size = 0) +
   facet_grid(prop~sd+n) +
   theme_bw()
 

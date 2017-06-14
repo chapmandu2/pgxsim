@@ -17,6 +17,9 @@ Fit a dose response curve using the Levenberg-Marquardt Nonlinear Least-Squares 
 algorithm from the \pkg{minpack.lm} package.  Estimated pIC50 values can be extracted from
 the fit using the \code{\link{nls_extract}} function.
 }
+\details{
+NOTE: sometimes the fit will fail, in which case null is returned
+}
 \examples{
 data(drc_data_small)
 fit <- nls_fit(drc_data_small)

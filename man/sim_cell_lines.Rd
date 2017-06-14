@@ -4,8 +4,8 @@
 \alias{sim_cell_lines}
 \title{Simulate Cell Lines}
 \usage{
-sim_cell_lines(n, type = "d", prop = 0.2, prho = 0.9, mu = 1,
-  sd = 0.1, beta = 1, lb = -1.5, ub = Inf, sd_prop = 0, sd_add = 0)
+sim_cell_lines(n, type = "d", prop = 0.2, prho = 0.9, mu = 0,
+  sd = 0.1, beta = 1, lb = -4, ub = Inf, sd_prop = 0, sd_add = 0)
 }
 \arguments{
 \item{n}{Number of cell lines to simulate}

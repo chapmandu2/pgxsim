@@ -19,16 +19,16 @@
 #' @examples
 #' library(dplyr)
 #' set.seed(10000)
-#' sim_pIC50(1, 1, 0, 0, type='d')
-#' sim_pIC50(1, 1, 0, 0, n=10, type='d')
+#' sim_pIC50(0, 1, 0, 0, type='d')
+#' sim_pIC50(0, 1, 0, 0, n=10, type='d')
 #' sim_cell_lines(n=10, type='d', prop=0.2) %>%
-#'  dplyr::mutate(pIC50=sim_pIC50(1,1,beta=1,gene, n=n(), type='d'))
-sim_pIC50 <- function(mu, sd, beta, g, n=1, type='d', lb=-1.5, ub=Inf) {
+#'  dplyr::mutate(pIC50=sim_pIC50(0,1,beta=1,gene, n=n(), type='d'))
+sim_pIC50 <- function(mu, sd, beta, g, n=1, type='d', lb=-4, ub=Inf) {
 
   if(grepl(paste0('^',type),'discrete')) {
 
     #simulate from truncated normal distribution
-        msm::rtnorm(n,mu*(1 + g*beta),sd,lb,ub)
+        msm::rtnorm(n, (mu + g*beta),sd,lb,ub)
 
     } else if (grepl(paste0('^',type),'continuous')) {
 

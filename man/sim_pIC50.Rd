@@ -4,7 +4,7 @@
 \alias{sim_pIC50}
 \title{Simulate pIC50 value}
 \usage{
-sim_pIC50(mu, sd, beta, g, n = 1, type = "d", lb = -1.5, ub = Inf)
+sim_pIC50(mu, sd, beta, g, n = 1, type = "d", lb = -4, ub = Inf)
 }
 \arguments{
 \item{mu}{mean of the truncated normal distribution}
@@ -33,8 +33,8 @@ value for a cell line.  Incorporates genetic covariate information.
 \examples{
 library(dplyr)
 set.seed(10000)
-sim_pIC50(1, 1, 0, 0, type='d')
-sim_pIC50(1, 1, 0, 0, n=10, type='d')
+sim_pIC50(0, 1, 0, 0, type='d')
+sim_pIC50(0, 1, 0, 0, n=10, type='d')
 sim_cell_lines(n=10, type='d', prop=0.2) \%>\%
- dplyr::mutate(pIC50=sim_pIC50(1,1,beta=1,gene, n=n(), type='d'))
+ dplyr::mutate(pIC50=sim_pIC50(0,1,beta=1,gene, n=n(), type='d'))
 }
