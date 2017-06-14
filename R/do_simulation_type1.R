@@ -1,7 +1,7 @@
 #' Do Type 1 Simulation
 #'
 #' In this simulation data is simulated from scratch for each iteration, ie no data is shared
-#' between simulations
+#' between simulations.  No test level statistics are calculated.
 #'
 #' @param df data frame containing columns named by parameter
 #'

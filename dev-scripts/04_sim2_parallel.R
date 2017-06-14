@@ -2,16 +2,19 @@ library(pgxsim)
 library(tidyverse)
 
 #prepare a data frame
-fixed_df <- data_frame(type='discrete', mu=1, lb=0.001, ub=30, ndoses=10, nreps=3, sd_prop=0.3, sd_add=0.15)
-varying_df <- crossing(sd=c(0.1, 0.5, 2), n=c(50, 200, 400), prop=c(0.05,0.1,0.2), beta=log10(c(2,5,10))) %>%
-#varying_df <- crossing(sd=c(0.1,2), n=c(50, 200), prop=c(0.05,0.2), beta=log10(c(2,5,10))) %>%
+fixed_df <- data_frame(type='discrete', mu=-1, lb=0.001, ub=30, ndoses=10, nreps=3, sd_prop=0.3, sd_add=0.15)
+#varying_df <- crossing(sd=c(0.1, 0.5, 2), n=c(50, 200, 400), prop=c(0.05,0.1,0.2), beta=log10(c(2,5,10))) %>%
+  varying_df <- crossing(sd=c(0.1,2), n=c(50, 200), prop=c(0.05,0.2), beta=log10(c(2,5,10))) %>%
   dplyr::mutate(sim_group=row_number())
 complete_df <- crossing(fixed_df, varying_df, sim_rep=c(1:10)) %>%
   dplyr::mutate(sim_unique_id=row_number(),
                 batch=sample(1:32, n(), replace = TRUE))
 
-#test1 <- do_simulation_type1(dplyr::sample_n(complete_df, 5))
-#test2 <- subset_apply(6, complete_df, do_simulation_type1)
+test_df <- dplyr::sample_n(complete_df, 5)
+test1 <- do_simulation_type2(dplyr::sample_n(complete_df, 5))
+test2 <- subset_apply(6, complete_df, do_simulation_type2)
+
+complete_df %>% dplyr::filter(batch==6) %>% dplyr::slice(10) %>% do_simulation_type2()
 
 # process in parallel using batchtools -------------------------------------
 
@@ -40,7 +43,8 @@ reg <- makeRegistry(id="BatchJobs",
                     file.dir = bjfiles_dir)
 
 #map
-batchMap(reg, fun=subset_apply, k=1:max(complete_df$batch), more.args=list(df=complete_df, my_fun=do_simulation_type1))
+batchMap(reg, fun=subset_apply, k=1:max(complete_df$batch),
+         more.args=list(df=complete_df, my_fun=do_simulation_type2))
 #submitJobs(reg)
 submitJobs(reg, resources = bj_resources)
 #waitForJobs(reg)
@@ -51,7 +55,6 @@ job_info <- getJobInfo(reg)
 #gather results and bind into a dataframe
 res <- reduceResultsList(reg, findDone(reg))
 res_df <- bind_rows(res) %>%
-  dplyr::select(sim_unique_id, term, estimate, std.error, statistic, p.value, method) %>%
   inner_join(complete_df, by='sim_unique_id')
 
 #tidy up
@@ -59,13 +62,13 @@ removeRegistry(reg, ask='no')
 
 # explore results
 #estimates
-ggplot(res_df, aes(as.factor(round(beta,2)), estimate, colour=method)) +
+ggplot(res_df, aes(as.factor(round(beta,2)), beta_estimate, colour=method)) +
   geom_boxplot(outlier.size = 0) +
   facet_grid(prop~sd+n) + ylim(-1,2) +
   theme_bw()
 
 #p values
-ggplot(res_df, aes(as.factor(round(beta,2)), -log10(p.value), colour=method)) +
+ggplot(res_df, aes(as.factor(round(beta,2)), -log10(beta_pval), colour=method)) +
   geom_boxplot(outlier.size = 0) +
   facet_grid(prop~sd+n) +
   theme_bw()
@@ -76,7 +79,7 @@ sig_calc <- res_df %>%
                 rci_sig=abs(1.98*std.error/estimate)<=1) %>%
   dplyr::group_by(sim_group, method, sd, n, prop, beta) %>%
   dplyr::summarise(p_sig=mean(p_sig),
-            rci_sig=mean(rci_sig))
+                   rci_sig=mean(rci_sig))
 
 
 #as previous

@@ -13,6 +13,9 @@ subset_apply(k, df, my_fun)
 
 \item{my_fun}{function to apply}
 }
+\value{
+output of function my_fun
+}
 \description{
 Subset a data frame and apply a function to that portion of it
 }

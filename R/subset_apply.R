@@ -6,7 +6,7 @@
 #' @param df data frame to subset
 #' @param my_fun function to apply
 #'
-#' @return
+#' @return output of function my_fun
 #' @export
 #'
 #' @examples
