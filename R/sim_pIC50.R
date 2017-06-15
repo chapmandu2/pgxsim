@@ -9,8 +9,8 @@
 #' @param g value of the gene (0/1 for discrete or Z-value for continuous)
 #' @param n number of data points to generate (default is 1)
 #' @param type Whether genetic covariate is a discrete (d) or continuous (c) variable
-#' @param lb lower bound of the distribution
-#' @param ub upper bound of the distribution
+#' @param lb lower bound of the pIC50 distribution
+#' @param ub upper bound of the pIC50 distribution
 #'
 #' @return numeric
 #' @export sim_pIC50

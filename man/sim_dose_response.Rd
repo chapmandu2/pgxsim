@@ -4,15 +4,15 @@
 \alias{sim_dose_response}
 \title{Simulate Dose Response Data}
 \usage{
-sim_dose_response(pIC50 = 1, lb = 0.001, ub = 30, ndoses = 10,
+sim_dose_response(pIC50 = 1, minconc = 0.001, maxconc = 30, ndoses = 10,
   nreps = 3, sd_prop = 0.1, sd_add = 0.1)
 }
 \arguments{
 \item{pIC50}{The pIC50 for the cell line}
 
-\item{lb}{Lowest concentration the cell line is tested at}
+\item{minconc}{Lowest concentration the cell line is tested at}
 
-\item{ub}{Highest concentration the cell line is tested at}
+\item{maxconc}{Highest concentration the cell line is tested at}
 
 \item{ndoses}{Number of doses}
 

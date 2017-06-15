@@ -19,9 +19,9 @@ sim_pIC50(mu, sd, beta, g, n = 1, type = "d", lb = -4, ub = Inf)
 
 \item{type}{Whether genetic covariate is a discrete (d) or continuous (c) variable}
 
-\item{lb}{lower bound of the distribution}
+\item{lb}{lower bound of the pIC50 distribution}
 
-\item{ub}{upper bound of the distribution}
+\item{ub}{upper bound of the pIC50 distribution}
 }
 \value{
 numeric

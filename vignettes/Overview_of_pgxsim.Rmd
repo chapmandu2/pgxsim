@@ -125,11 +125,11 @@ In this case the linear regression coefficient is less immediately useful since 
 We now need to simulate the experimental data itself, namely the response seen when the cell line is treated with compound at different concentrations.  This is done in the same way regardless of how the pIC50 values were generated.  The `sim_dose_response` function can be used to do this as follows:
 
 ```{r}
-ex_dr1 <- sim_dose_response(pIC50=0, lb=0.001, ub=30, 
+ex_dr1 <- sim_dose_response(pIC50=0, minconc=0.001, maxconc=30, 
                             ndoses=10, nreps=1, sd_prop=0, sd_add=0)
 ex_dr1
 ```
-Here we specify the pIC50 value, the lowest concentration tested `lb`, the highest concentration tested `ub`, the number of doses `ndoses`, the number of replicates per dose `nreps`, and the additive and proportional variance `sd_prop` and `sd_add`.  Since we specified zero variance, we get the perfect dose response curve with an IC50 of 1 (pIC50=0):
+Here we specify the pIC50 value, the lowest concentration tested `minconc`, the highest concentration tested `maxconc`, the number of doses `ndoses`, the number of replicates per dose `nreps`, and the additive and proportional variance `sd_prop` and `sd_add`.  Since we specified zero variance, we get the perfect dose response curve with an IC50 of 1 (pIC50=0):
 
 ```{r}
 ggplot(ex_dr1, aes(x=conc, y=resp)) + geom_point() + geom_line() + scale_x_log10() + theme_bw()
@@ -138,7 +138,7 @@ ggplot(ex_dr1, aes(x=conc, y=resp)) + geom_point() + geom_line() + scale_x_log10
 By changing `sd_add` and `sd_prop` we can introduce experimental noise into the data:
 
 ```{r}
-ex_dr2 <- sim_dose_response(pIC50=0, lb=0.001, ub=30, 
+ex_dr2 <- sim_dose_response(pIC50=0, minconc=0.001, maxconc=30, 
                             ndoses=10, nreps=3, sd_prop=0.1, sd_add=0.1)
 ggplot(ex_dr2, aes(x=conc, y=resp)) + geom_smooth(se = FALSE, method='loess') + 
   geom_point() + scale_x_log10() + theme_bw()
@@ -152,8 +152,9 @@ Data for the first 10 cell lines we simulated earlier can be generated using the
 ```{r}
 dr_data <- pIC50_data %>%
   dplyr::filter(cell_id <= 10) %>%
-  dplyr::mutate(data=purrr::map(pIC50, ~sim_dose_response(pIC50=., lb=0.001, ub=30, 
-                            ndoses=10, nreps=3, sd_prop=0.1, sd_add=0.1)))
+  dplyr::mutate(data=purrr::map(pIC50, ~sim_dose_response(pIC50=., 
+                            minconc=0.001, maxconc=30, ndoses=10, 
+                            nreps=3, sd_prop=0.1, sd_add=0.1)))
 dr_data
 dr_data$data[[1]]
 ```
@@ -175,7 +176,7 @@ ggplot(dr_data_unnested, aes(x=conc, y=resp)) +
 The functions that `pgxsim` provides are controlled by a variety of parameters, and we would like to explore the effect that these parameters have when trying to retrieve the genetic association.  To start with we want to specify a data frame containing all of the combinations of parameters that we wish to explore.  The `tidyr::crossing` function is useful to achieve this, below we set up four simulations with different values for the proportional and additive variance, but the same principle can be applied to vary other parameters.
 
 ```{r}
-param_df <- tidyr::crossing(lb=0.001, ub=30, ndoses=10, 
+param_df <- tidyr::crossing(minconc=0.001, maxconc=30, ndoses=10, 
                             nreps=3, sd_prop=c(0.001, 0.2), 
                             sd_add=c(0.001, 0.2)) %>%
     dplyr::mutate(sim_no=row_number())
@@ -193,7 +194,7 @@ Finally we use the data in the data frame as parameters for the `sim_dose_respon
 
 ```{r}
 simulation_df <-  simulation_df %>% dplyr::mutate(
-  dr_data=purrr::pmap(.l=list(pIC50, lb, ub, ndoses, nreps, sd_prop, sd_add),
+  dr_data=purrr::pmap(.l=list(pIC50, minconc, maxconc, ndoses, nreps, sd_prop, sd_add),
                       .f=sim_dose_response)) %>%
   dplyr::select(sim_no, cell_id, gene, pIC50, sd_prop, sd_add, dr_data)
 simulation_df %>% dplyr::select(sim_no, cell_id, dr_data)

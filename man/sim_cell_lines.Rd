@@ -22,9 +22,9 @@ sim_cell_lines(n, type = "d", prop = 0.2, prho = 0.9, mu = 0,
 
 \item{beta}{value of the genetic coefficient to recover - note that this is on a log scale}
 
-\item{lb}{lower bound of the distribution}
+\item{lb}{lower bound of the pIC50 distribution}
 
-\item{ub}{upper bound of the distribution}
+\item{ub}{upper bound of the pIC50 distribution}
 
 \item{sd_prop}{Cell line specific proportional dose response variance}
 

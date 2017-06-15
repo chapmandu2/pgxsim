@@ -9,8 +9,8 @@
 #' @param mu mean of the truncated normal distribution
 #' @param sd standard deviation of the truncated normal distribution
 #' @param beta value of the genetic coefficient to recover - note that this is on a log scale
-#' @param lb lower bound of the distribution
-#' @param ub upper bound of the distribution
+#' @param lb lower bound of the pIC50 distribution
+#' @param ub upper bound of the pIC50 distribution
 #' @param sd_prop Cell line specific proportional dose response variance
 #' @param sd_add Cell line specific additive dose response variance
 #'
@@ -22,7 +22,8 @@
 #' set.seed(10000)
 #' sim_cell_lines(n=10, type='d', prop=0.2, mu=1, sd=0.1, beta=1)
 #' sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, pr=0.6)
-sim_cell_lines <- function(n, type='d', prop=0.2, prho=0.9, mu=0, sd=0.1, beta=1, lb=-4, ub=Inf, sd_prop=0, sd_add=0) {
+sim_cell_lines <- function(n, type='d', prop=0.2, prho=0.9, mu=0, sd=0.1, beta=1,
+                           lb=-4, ub=Inf, sd_prop=0, sd_add=0) {
 
   if(grepl(paste0('^',type),'discrete')) {
 

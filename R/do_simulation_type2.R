@@ -14,14 +14,28 @@ do_simulation_type2 <- function(df) {
 
   #simulate cell lines new method
   sim_cl_data <- df %>%
-    dplyr::mutate(cl_data=purrr::pmap(.l=list(n=n, type=type, prop=prop, mu=mu, sd=sd, beta=beta),
+    dplyr::mutate(cl_data=purrr::pmap(.l=list(n=n, type=type, prop=prop, mu=mu, sd=sd, beta=beta, lb=lb, ub=ub),
                                       .f=sim_cell_lines)) %>%
     tidyr::unnest() %>%
     dplyr::select(-cl_sd_prop, -cl_sd_add)
 
+  #TEST - JUST LM
+  #input_df <- sim_cl_data %>%
+  #   dplyr::select(sim_unique_id, cell_id, gene, pIC50) %>%
+  #   dplyr::group_by(sim_unique_id) %>%
+  #   tidyr::nest()
+
+  #res_df <- input_df %>%
+  #  dplyr::mutate(lm_res=purrr::map(data, lm_method)) %>%
+  #  dplyr::select(-data) %>%
+  #  tidyr::unnest()
+
+  #return(res_df)
+#END TEST
+
   #simulate dose response data
   sim_dr_data <- sim_cl_data %>%
-    dplyr::mutate(dr_data = purrr::pmap(.l=list(pIC50, lb, ub, ndoses, nreps, sd_prop, sd_add),
+    dplyr::mutate(dr_data = purrr::pmap(.l=list(pIC50=pIC50, minconc=minconc, maxconc=maxconc, ndoses=ndoses, nreps=nreps, sd_prop=sd_prop, sd_add=sd_add),
                                         .f=sim_dose_response))
 
   #prepare data - one row per simulation
@@ -29,12 +43,6 @@ do_simulation_type2 <- function(df) {
     dplyr::select(sim_unique_id, cell_id, gene, pIC50, dr_data) %>%
     dplyr::group_by(sim_unique_id) %>%
     tidyr::nest()
-
-  #for testing
-  #input_df <- sim_cl_data %>%
-  #   dplyr::select(sim_unique_id, cell_id, gene, pIC50) %>%
-  #   dplyr::group_by(sim_unique_id) %>%
-  #   tidyr::nest()
 
   #apply different methods and gather the results
   res_df <- input_df %>%
