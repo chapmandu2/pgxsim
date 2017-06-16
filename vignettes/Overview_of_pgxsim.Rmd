@@ -8,7 +8,7 @@ output:
     toc: yes
     toc_depth: '3'
 vignette: >
-  %\VignetteIndexEntry{pgxsimOverview}
+  %\VignetteIndexEntry{Overview of pgxsim}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -35,7 +35,7 @@ set.seed(10001)
 ```
 
 ## About the tidyverse
-This vignette makes extensive use of the [tidyverse](http://www.tidyverse.org) suite of packages and concepts.  For an introduction see this [video on YouTube](https://www.youtube.com/watch?v=rz3_FDVt9eg) or read the [Managing Many Models section](http://r4ds.had.co.nz/many-models.html) of Hadley Wickham's R For Data Science book.. 
+This vignette makes extensive use of the [tidyverse](http://www.tidyverse.org) suite of packages and concepts.  For an introduction see this [video on YouTube](https://www.youtube.com/watch?v=rz3_FDVt9eg) or read the [Managing Many Models section](http://r4ds.had.co.nz/many-models.html) of Hadley Wickham's R For Data Science book..
 
 # Simulating data
 ## Simulation of cell lines with mutation and dose response data
@@ -424,6 +424,10 @@ nlme_gene_res %>%
 ```
 
 Using this approach, the estimate of the genetic effect is near 1 for all simulations, even where a lot of experimental variability is present.
+
+# Next Steps
+
+This vignette explains the basic workings and concepts of the pgxsim package.  See the Simulations vignette to understand how to use the package to carry out larger scale simulations.
 
 # Session Info
 ```{r}

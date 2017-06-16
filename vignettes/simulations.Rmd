@@ -1,0 +1,364 @@
+---
+title: "Simulations using the pgxsim package"
+author: "Phil Chapman and Hitesh Mistry"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    number_sections: yes
+    toc: yes
+    toc_depth: '3'
+vignette: >
+  %\VignetteIndexEntry{Simulations in pgxsim}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Introduction
+
+When carrying out a pharmacogenomics study, the aim is to quantify the impact that genetic features have on the response to compound.  However, there are a large number of parameters that could affect the ability of the experiment to do this:
+
+- size of the effect
+- variability in pIC50 among cell lines
+- number of cell lines with a mutations
+- number of cell lines profiled
+- experimental variability in the dose response curves
+- configuration of the dose response experiment (replicates, number of doses)
+- method used to do the analysis
+
+In this vignette a general approach is described which can be scaled up using batch processing to cover very many parameter combinations and repeat simulations.
+
+# Set Up
+## Load libraries
+Load required libraries etc:
+```{r, warning=FALSE, message=FALSE}
+library(pgxsim)
+library(tidyverse)
+library(drc)
+library(purrr)
+set.seed(10001)
+```
+
+## About the tidyverse
+This vignette makes extensive use of the [tidyverse](http://www.tidyverse.org) suite of packages and concepts.  For an introduction see this [video on YouTube](https://www.youtube.com/watch?v=rz3_FDVt9eg) or read the [Managing Many Models section](http://r4ds.had.co.nz/many-models.html) of Hadley Wickham's R For Data Science book..
+
+# The anatomy of a simulation experiment
+
+## Define the simulations
+
+The first step in a simulation experiment is to define all of the simulations to be carried out.  Each simulation will have its own set of parameters, and these can be put into a data frame as follows.
+
+Firstly, specify the parameters that will remain fixed:
+```{r}
+fixed_df <- dplyr::data_frame(type='discrete', mu=0, lb=-4, ub=Inf, sd=1, 
+                       minconc=0.001, maxconc=30, ndoses=10, nreps=3, 
+                       sd_prop=0.3, sd_add=0.15, n=50)
+fixed_df
+```
+
+Secondly, specify the parameters that will vary and combine using the `tidyr::crossing` function.  In this case we are considering three values of effect size (beta) and two values  of different mutation frequency:
+
+```{r}
+varying_df <- tidyr::crossing(prop=c(0.1,0.3), beta=log10(c(2,5,10))) %>%
+  dplyr::mutate(sim_group=row_number())
+varying_df
+```
+
+Finally, combine the two data frames again using the `tidyr::crossing` function, define how many times each simulation is to be run, and add a unique simulation identifier.  This gives a data frame with one row per simulation to be carried out, and columns defining the various parameters.
+
+```{r}
+complete_df <- crossing(fixed_df, varying_df, sim_rep=c(1:3)) %>%
+  dplyr::mutate(sim_unique_id=row_number())
+complete_df
+```
+
+## Simulate cell lines
+
+Next we simulate the cell lines for each simulation we defined in the previous section.  The `purrr::pmap` function can be used to map the parameter column values into the `sim_cell_lines` function:
+
+```{r}
+sim_cl_data <- complete_df %>%
+  dplyr::mutate(cl_data=purrr::pmap(.l=list(n=n, type=type, prop=prop,
+                                            mu=mu, sd=sd, beta=beta, 
+                                            lb=lb, ub=ub),
+                                    .f=sim_cell_lines))
+sim_cl_data
+```
+This gives a nested data frame with one row per simulation as before, so this is unnested to generate a data frame with one row per simulated cell line.  Even with this relatively small experiment 900 cell lines must be simulated!
+
+```{r}
+sim_cl_data <- sim_cl_data %>%
+  tidyr::unnest() %>%
+  dplyr::select(-cl_sd_prop, -cl_sd_add)
+sim_cl_data %>% dplyr::select(sim_unique_id, prop, beta, cell_id, gene, pIC50)
+
+```
+
+## Simulate dose response data
+
+Next the dose response data is simulated for each cell line, using the same principle of mapping the `sim_dose_response` function to each row of the cell line data frame using `pmap::purrr`.  This gives a data frame with one row per cell line, and with the dose response data as a data frame in a list-col:
+
+```{r}
+sim_dr_data <- sim_cl_data %>%
+  dplyr::mutate(dr_data = purrr::pmap(.l=list(pIC50=pIC50, 
+                                              minconc=minconc, maxconc=maxconc, 
+                                              ndoses=ndoses, nreps=nreps, 
+                                              sd_prop=sd_prop, sd_add=sd_add),
+                                      .f=sim_dose_response))
+sim_dr_data  %>% dplyr::select(sim_unique_id, prop, beta, cell_id, gene, pIC50, dr_data)
+```
+
+
+## Clean and prepare simulated data
+
+As a final step, unneeded columns are removed and the data frame is nested by the unique simulation id to give row row per simulation again.  In this double-nested data frame the cell line information is a data frame list-col, and within this data frame dose response data is also a data frame list-col
+
+```{r}
+input_df <- sim_dr_data %>%
+  dplyr::select(sim_unique_id, cell_id, gene, pIC50, dr_data) %>%
+  dplyr::group_by(sim_unique_id) %>%
+  tidyr::nest()
+
+input_df 
+```
+
+The cell line data for the first simulation is extracted below:
+
+```{r}
+input_df$data[[1]]
+```
+
+And the dose response data for the first cell line of the first simulation is:
+
+```{r}
+input_df$data[[1]]$dr_data[[1]]
+```
+
+## Applying methods to simulated data
+
+In the overview vignette, the following methods are introduced to extract the genetic effect from a dataset:
+
+- linear regression the simulated pIC50 by gene values - this is the 'correct' result that other methods have to achieve
+- estimation of pIC50 using non-linear least squares regression on each cell line seperately, then linear regression of these values against gene status
+- estimation of pIC50 using non-linear mixed effects regression on all cell lines together, followed by linear regression of these values against gene status
+- estimation of the genetic effect directly by including the gene status variable in a non-linear mixed effects model.
+
+Each method is wrapped in its own function which gives an output in a standard format which can then be combined.  The methods can be called as follows:
+
+### lm_method
+
+```{r}
+lm_method(input_df$data[[1]]) 
+```
+
+### nls_lm_method
+
+```{r}
+nls_lm_method(input_df$data[[1]])
+```
+
+### nlme_lm_method
+
+```{r}
+nlme_lm_method(input_df$data[[1]])
+```
+
+### nlme_gene_method
+
+```{r}
+nlme_gene_method(input_df$data[[1]])
+```
+
+## Apply methods to multiple simulations
+
+In the example below, the `lm_method` can be applied to each simulation in the `input_df` data frame using `purrr::map`:
+
+```{r}
+lm_res <- input_df %>%
+  dplyr::transmute(sim_unique_id, res=purrr::map(data, lm_method)) %>%
+  tidyr::unnest()
+lm_res
+```
+
+## Apply multiple methods to multiple simulations
+
+To apply all four methods to the data for each simulation, we simply use the same approach for the other method functions:
+
+```{r}
+all_res <- input_df %>%
+  dplyr::mutate(lm_res=purrr::map(data, lm_method),
+                nlme_lm_res=purrr::map(data, nlme_lm_method),
+                nls_lm_method=purrr::map(data, nls_lm_method),
+                nlme_gene_method=purrr::map(data, nlme_gene_method)) %>%
+  dplyr::select(-data)
+all_res
+```
+
+## Reformat simulation results
+
+As the outputs are standardised they can be gathered and combined into a single unnested data frame:
+
+```{r}
+all_res_combined <- all_res %>%
+  tidyr::gather(func, val, -sim_unique_id) %>%
+  tidyr::unnest() %>%
+  dplyr::select(-func)
+all_res_combined
+```
+
+The original simulation definitions are then merged in:
+
+```{r}
+final_df <- all_res_combined %>%
+  dplyr::inner_join(complete_df, by='sim_unique_id')
+```
+
+## Visualise simulation results
+
+Finally the results can be visualsed, in this case comparing the p value obtained for each proportion and effect size.  However, since there are only 3 repeat simulations for each combination of parameters it isn't possible to conclude much.
+
+```{r}
+ggplot(final_df, aes(as.factor(round(beta,2)), -log10(test_pval), colour=method)) +
+  geom_point(size=rel(3), shape=21, position = position_jitter(width=.2)) +
+  facet_grid(prop~n) +
+  theme_bw()
+```
+
+# Batch and Parallel Processing
+
+## Wrapper function
+
+The analysis described in the last section is wrapped into the `do_simulation_type2` function which takes the data frame of simulation parameters and runs a 
+complete simulation for each row.  It is is called as follows:
+
+```{r}
+#first simulation
+do_simulation_type2(complete_df[1,])
+
+#for the first 2 simulations
+do_simulation_type2(complete_df[1:2,])
+```
+
+## Batch processing 
+
+As we saw before, we really need more repeats of each simulation to understand
+how each method is performing.  The code below defines and runs 20 repeats per simulation
+
+```{r, eval=FALSE}
+large_sim_df <- crossing(fixed_df, varying_df, sim_rep=c(1:20)) %>%
+  dplyr::mutate(sim_unique_id=row_number())
+
+large_sim_results <- do_simulation_type2(large_sim_df)
+```
+
+## Parallel processing
+
+The wrapper function makes it easy to define and run larger simulation experiments, however the time taken to do this becomes limiting.  There are many additional parameters to explore and each simulation would have to be repeated 100s or 1000s of times for a power calculation.  The simulation speed is dictated by number of cell lines in each simulation,  and the total number of simulations.
+
+However, since each simulateion is independent of the others, parallelisation is the obvious way forward.  In the example below, the BatchJobs package is used since this allows the same code to be run in a number of different computing environments, from multicore processing on a workstation or laptop, to 1000s of cores across a cluster or cloud environment.
+
+### Define simulations
+
+The same principle as before is used to define the simulations, the difference is that an additional column `batch` column is added which defines how the simulations are grouped together.  In this case 16 batches are created to be split across however many cores are available.  This number can be varied depending on the number of cores available and the number of simulations to be done.
+
+```{r}
+parallel_sim_df <- crossing(fixed_df, varying_df, sim_rep=c(1:40)) %>%
+  dplyr::mutate(sim_unique_id=row_number(),
+                batch=sample(1:16, n(), replace = TRUE))
+parallel_sim_df 
+```
+
+The `subset_apply` function is used to split the simulation definition data frame into batches and apply the analysis wrapper function.
+
+```{r, eval=FALSE}
+subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2)
+```
+
+### Configure BatchJobs environment
+
+The code below configures BatchJobs to run on a MacOS or Linux computer.  Alternative `makeClusterFunctions` options are available for common job schedulers.
+
+```{r, eval=FALSE}
+
+library(BatchJobs)
+setConfig(cluster.functions=makeClusterFunctionsMulticore(ncpus=8))
+bjwork_dir <- file.path(tempdir(), sample(LETTERS, 10) %>% paste(., collapse=''))
+bjfiles_dir <- file.path(tempdir(), sample(LETTERS, 10) %>% paste(., collapse=''))
+dir.create(bjwork_dir)
+dir.create(bjfiles_dir)
+bj_resources <- list()
+
+```
+
+Next the BatchJobs registry is created, being sure to define the packages that are needed:
+
+```{r, eval=FALSE}
+reg <- makeRegistry(id="BatchJobs",
+                    packages=c('pgxsim', 'tidyverse'),
+                    work.dir = bjwork_dir,
+                    file.dir = bjfiles_dir)
+
+```
+
+### Run the parallelised analysis
+
+The jobs are created using the batchMap function - each batch id is mapped to the `subset_apply` function including the analysis wrapper function and simulation specification data frame as additional arguments:  
+
+```{r, eval=FALSE}
+batchMap(reg, fun=subset_apply, k=1:max(parallel_sim_df$batch),
+         more.args=list(df=parallel_sim_df, my_fun=do_simulation_type2))
+```
+
+The jobs are then submitted.  In a cluster environment the resources variable can define how much resource is required for each job but this can be left empty here:
+
+```{r, eval=FALSE}
+submitJobs(reg, resources = bj_resources)
+```
+
+The jobs can be monitored until done:
+
+```{r, eval=FALSE}
+showStatus(reg)
+done <- findDone(reg)
+job_info <- getJobInfo(reg)
+```
+
+### Process the results and tidy up
+
+Once the jobs are all finished the output from each can be retrieved and combined:
+
+```{r, eval=FALSE}
+parallel_res <- reduceResultsList(reg, findDone(reg))
+parallel_res_df <- dplyr::bind_rows(parallel_res) %>%
+  dplyr::inner_join(parallel_sim_df, by='sim_unique_id')
+```
+
+And the registry removed to clean up behind us:
+
+```{r, eval=FALSE}
+removeRegistry(reg, ask='no')
+```
+
+### Visualise the results
+
+```{r, include=FALSE}
+data(parallel_res_df)
+```
+
+```{r}
+ggplot(parallel_res_df, aes(as.factor(round(beta,2)), -log10(test_pval), colour=method)) +
+  geom_boxplot(outlier.size=0) +
+  facet_grid(prop~n) +
+  theme_bw()
+```
+
+Now we see more clearly what we would expect, that all methods perform better when the effect size is large and the proportion of cell lines with the genetic mutation is high.  The `nls_lm` method seems weaker than the mixed-effects based methods.
+
+# Conclusion
+
+This vignette has described the principles required to run large scale pharmacogenomic simulation studies in a parallelised computing environment. 
+
+# Session Info
+```{r}
+sessionInfo()
+```
+

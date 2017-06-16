@@ -21,7 +21,7 @@
 #' library(dplyr)
 #' set.seed(10000)
 #' sim_cell_lines(n=10, type='d', prop=0.2, mu=1, sd=0.1, beta=1)
-#' sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, pr=0.6)
+#' sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, prho=0.6)
 sim_cell_lines <- function(n, type='d', prop=0.2, prho=0.9, mu=0, sd=0.1, beta=1,
                            lb=-4, ub=Inf, sd_prop=0, sd_add=0) {
 

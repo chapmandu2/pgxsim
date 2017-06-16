@@ -40,5 +40,5 @@ Simulate cell lines with predefined genetic and drug response characteristics.
 library(dplyr)
 set.seed(10000)
 sim_cell_lines(n=10, type='d', prop=0.2, mu=1, sd=0.1, beta=1)
-sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, pr=0.6)
+sim_cell_lines(n=10, type='c', mu=1, sd=0.1, beta=1, prho=0.6)
 }
