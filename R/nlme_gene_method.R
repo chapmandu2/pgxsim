@@ -21,10 +21,7 @@ nlme_gene_method <- function(df) {
   test_stat <- -2*m0$logLik+2*m1$logLik
   test_pval <- 1-stats::pchisq(test_stat,1)
 
-  broom::tidy(m1, effects='fixed') %>%
-    dplyr::filter(term=='b') %>%
-    dplyr::transmute(term, beta_estimate=estimate,
-                     beta_std_err=std.error, beta_pval=p.value) %>%
+  nlme_gene_extract(m1) %>%
     dplyr::mutate(test_rsq = NA,
                   test_stat = test_stat,
                   test_pval = test_pval,

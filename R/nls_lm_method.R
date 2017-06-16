@@ -17,11 +17,11 @@ nls_lm_method <- function(df) {
 
   nls_results <- cleaned_df %>%
     dplyr::mutate(fit=purrr::map(dr_data, nls_fit),
-                  res=purrr::map(fit, broom::tidy)) %>%
+                  res=purrr::map(fit, nls_extract)) %>%
     dplyr::select(-dr_data,-fit) %>%
     tidyr::unnest()
 
-  lm_method(nls_results, 'estimate') %>%
+  lm_method(nls_results, 'nls_pIC50') %>%
     dplyr::mutate(method='nls_lm')
 
 }

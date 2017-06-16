@@ -11,9 +11,9 @@
 #' #
 nlme_gene_fit <- function(df) {
   df <- nlme::groupedData(resp~conc|cell_id,data=df)
-  nlme::nlme(resp~1-conc/(10^(ic50 + b*gene)+conc),
+  nlme::nlme(resp~1-conc/(exp(ic50 + b*gene)+conc),
        fixed = ic50+b~1, random = nlme::pdDiag(ic50 ~1),
-       data = df, start = c(0,1), method='ML',
+       data = df, start = c(1,1), method='ML',
        verbose = FALSE, control = nlme::nlmeControl(pnlsMaxIter=10,tolerance=1e0)
   )
 

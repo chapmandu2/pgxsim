@@ -22,7 +22,9 @@ NOTE: sometimes the fit will fail, in which case null is returned
 }
 \examples{
 data(drc_data_small)
-fit <- nls_fit(drc_data_small)
+cl1_data <- dplyr::filter(drc_data_small, cell_id==1)
+fit <- nls_fit(cl1_data)
 fit
-broom::tidy(fit)
+broom::tidy(fit)  #on log-normal scale
+nls_extract(fit)  #convenience function converts scales automatically
 }

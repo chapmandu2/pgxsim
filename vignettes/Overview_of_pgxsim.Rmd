@@ -217,7 +217,7 @@ The `drc` package contains useful functions to fit conventional Hill curves to d
 ```{r}
 fit <- drc::drm(resp~conc, fct=LL.4(), data=ex_dr2) 
 plot(fit)
-log(ED(fit, 50, display = FALSE))
+log10(ED(fit, 50, display = FALSE))
 ```
 
 This can be applied across multiple dose response datasets using `purrr::map` again:
@@ -255,6 +255,12 @@ Parameters can be extracted from the model using the `broom::tidy` function:
 broom::tidy(nfit)
 ```
 
+However this results estimates on a log-normal scale, so the convenience `nls_extract` function can be used instead to return estimates on a log10 scale.
+
+```{r}
+nls_extract(nfit)
+```
+
 This can be applied across multiple dose response datasets using `purrr::map` again to apply the convenience `nls_fit` function which carried out the fit above:
 
 ```{r warning=FALSE, message=FALSE}
@@ -263,14 +269,13 @@ nls_results <- simulation_df %>%
 nls_results
 ```
 
-The pIC50 values obtained can be extracted using the `tidy` function from the `broom` package:
+The pIC50 values obtained can be extracted by mapping the `nls_extract` function to the fit for each cell line:
 
 ```{r}
 nls_pIC50s <- nls_results %>%
-  dplyr::mutate(res=purrr::map(fit, broom::tidy)) %>%
+  dplyr::mutate(res=purrr::map(fit, nls_extract)) %>%
   dplyr::select(-dr_data,-fit) %>%
-  tidyr::unnest() %>%
-  dplyr::rename(nls_pIC50=estimate) 
+  tidyr::unnest() 
 nls_pIC50s
 ```
 
@@ -362,7 +367,7 @@ drc_lm <- drc_results %>%
 drc_lm
 ```
 
-We see that our estimate of the genetic covariate is imprecise in the simulations where there is more noise in the data.
+We see that our estimate of the genetic covariate is less precise in the simulations where there is more noise in the data.
 
 ### `nls` pIC50 estimates
 
@@ -380,8 +385,7 @@ nls_lm <- nls_pIC50s %>%
 nls_lm
 ```
 
-The nls followed by lm procedure does a good job of estimating the beta coefficient, although more simulations would be necessary to confirm this.
-
+The nls followed by lm procedure does a good job of estimating the beta coefficient, although more simulations would be necessary to confirm that this is always true.
 
 ### `nlme` pIC50 estimates
 
@@ -399,7 +403,7 @@ nlme_lm <- nlme_pIC50s %>%
 nlme_lm
 ```
 
-Although the standard errors are smaller and the statistical test for the covariate being non-zero is significant, the estimate of the covariate value is still a long way from 1.  Multiple simulations with the same amount of experimental variations would have to be carried out to get an estimate of how accurate the estimates are.
+Once again estimates around the expected value are obtain, but multiple simulations with the same parameters would have to be carried out to get an estimate of how accurate the estimates are on average.
 
 ## Including the genetic effect in the mixed effects model
 
@@ -413,7 +417,7 @@ nlme_gene_res <- nlme_data %>%
 nlme_gene_res
 ```
 
-Since the genetic covariate is included in the model, the estimate can be retrieved directly:
+Since the genetic covariate is included in the model, the estimate can be retrieved directly using `broom::tidy`:
 
 ```{r}
 nlme_gene_res %>%
@@ -423,7 +427,16 @@ nlme_gene_res %>%
     dplyr::filter(grepl('b', term)) 
 ```
 
-Using this approach, the estimate of the genetic effect is near 1 for all simulations, even where a lot of experimental variability is present.
+However the estimate is on the log-normal scale, so the `nlme_gene_extract` function can be used to carry out the appropriate conversions:
+
+```{r}
+nlme_gene_res %>%
+    dplyr::mutate(res=map(fit, nlme_gene_extract)) %>%
+    dplyr::select(-data, -fit) %>%
+    tidyr::unnest()
+```
+
+Using this approach, the estimate of the genetic effect is near the value obtained with lm for all simulations, even where a lot of experimental variability is present.
 
 # Next Steps
 
