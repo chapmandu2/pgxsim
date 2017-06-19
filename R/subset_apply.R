@@ -13,7 +13,7 @@
 #' NULL
 subset_apply <- function(k, df, my_fun) {
   df %>%
-    dplyr::filter(batch==k) %>%
+    dplyr::filter(.data$batch==k) %>%
     my_fun()
 
 }

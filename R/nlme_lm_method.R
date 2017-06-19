@@ -13,7 +13,7 @@
 nlme_lm_method <- function(df) {
 
   cleaned_df <- df %>%
-    dplyr::select(cell_id, gene, pIC50, dr_data)
+    dplyr::select(.data$cell_id, .data$gene, .data$pIC50, .data$dr_data)
 
   nlme_results <- cleaned_df %>%
     tidyr::unnest() %>%
@@ -21,7 +21,7 @@ nlme_lm_method <- function(df) {
     nlme_extract()
 
   combined_df <- cleaned_df %>%
-    dplyr::select(-dr_data) %>%
+    dplyr::select(-.data$dr_data) %>%
     dplyr::inner_join(nlme_results, by='cell_id')
 
   lm_method(combined_df, 'nlme_pIC50') %>%

@@ -39,10 +39,10 @@
 sim_dose_response <- function(pIC50=1, minconc=0.001, maxconc=30, ndoses=10, nreps=3, sd_prop=0.1, sd_add=0.1) {
   concs <- 10^(seq(log10(minconc), log10(maxconc), by=(log10(maxconc)-log10(minconc))/(ndoses-1)))
   tidyr::crossing(conc=concs, rep=1:nreps) %>%
-    dplyr::mutate(resp_raw = 1*(1 - 1/(1+((10^(pIC50))/conc))),
+    dplyr::mutate(resp_raw = 1*(1 - 1/(1+((10^(pIC50))/.data$conc))),
                   resp_sd_prop = stats::rnorm(ndoses*nreps, 0, sd_prop),
                   resp_sd_add = stats::rnorm(ndoses*nreps, 0, sd_add),
-                  resp = resp_raw * (1 + resp_sd_prop) + resp_sd_add) %>%
-    dplyr::select(-resp_sd_prop, -resp_sd_add)
+                  resp = .data$resp_raw * (1 + .data$resp_sd_prop) + .data$resp_sd_add) %>%
+    dplyr::select(-.data$resp_sd_prop, -.data$resp_sd_add)
 
 }

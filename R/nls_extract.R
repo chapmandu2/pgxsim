@@ -18,8 +18,8 @@ nls_extract <- function(fit) {
   if(!inherits(fit, 'nls')) {return(broom::tidy(NULL))}
   broom::tidy(fit) %>%
     dplyr::tbl_df() %>%
-    dplyr::mutate(nls_pIC50 = log10(exp(estimate)),
-                  nls_std_err = log10(exp(std.error))
+    dplyr::mutate(nls_pIC50 = log10(exp(.data$estimate)),
+                  nls_std_err = log10(exp(.data$std.error))
     ) %>%
-    dplyr::select(-estimate, -std.error)
+    dplyr::select(-.data$estimate, -.data$std.error)
 }

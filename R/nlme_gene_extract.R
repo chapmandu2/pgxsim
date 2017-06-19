@@ -14,7 +14,7 @@
 #' nlme_gene_extract(fit)
 nlme_gene_extract <- function(fit) {
   broom::tidy(fit, effects='fixed') %>%
-    dplyr::filter(term=='b') %>%
-    dplyr::transmute(term, beta_estimate=log10(exp(estimate)),
-                     beta_std_err=log10(exp(std.error)), beta_pval=p.value)
+    dplyr::filter(.data$term=='b') %>%
+    dplyr::transmute(.data$term, beta_estimate=log10(exp(.data$estimate)),
+                     beta_std_err=log10(exp(.data$std.error)), beta_pval=.data$p.value)
 }

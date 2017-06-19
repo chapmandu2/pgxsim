@@ -1,12 +1,12 @@
 Package: pgxsim
 Title: Simulate Dose Response Curves For Pharmacogenomics Analysis
-Version: 0.3.4
-Date: 2017-06-16
+Version: 0.3.5
+Date: 2017-06-19
 Author: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
 Maintainer: Phil Chapman <phil.chapman@cruk.manchester.ac.uk>
 Authors@R: c(
     person("Phil", "Chapman", , "phil.chapman@cruk.manchester.ac.uk", c("aut", "cre")),
-    person("Hitesh", "Mistry", , "hitesh.mistry@manchester.ac.uk", c("aut", "cre")))
+    person("Hitesh", "Mistry", , "hitesh.mistry@manchester.ac.uk", c("aut")))
 Description: Package to simulate dose response data from pharmacogenomics datasets where
  the interest is in estimating genetic effects using pIC50 values from large cell line panel
  screens.
@@ -30,7 +30,9 @@ Imports:
     purrr,
     drc,
     mvtnorm,
-    minpack.lm
+    minpack.lm,
+    rlang,
+    tidyverse
 RoxygenNote: 6.0.1
 Suggests: knitr,
     rmarkdown

@@ -13,12 +13,12 @@
 nls_lm_method <- function(df) {
 
   cleaned_df <- df %>%
-    dplyr::select(cell_id, gene, pIC50, dr_data)
+    dplyr::select(.data$cell_id, .data$gene, .data$pIC50, .data$dr_data)
 
   nls_results <- cleaned_df %>%
-    dplyr::mutate(fit=purrr::map(dr_data, nls_fit),
-                  res=purrr::map(fit, nls_extract)) %>%
-    dplyr::select(-dr_data,-fit) %>%
+    dplyr::mutate(fit=purrr::map(.data$dr_data, nls_fit),
+                  res=purrr::map(.data$fit, nls_extract)) %>%
+    dplyr::select(-.data$dr_data,-.data$fit) %>%
     tidyr::unnest()
 
   lm_method(nls_results, 'nls_pIC50') %>%

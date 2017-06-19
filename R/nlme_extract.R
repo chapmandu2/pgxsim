@@ -15,9 +15,9 @@
 nlme_extract <- function(fit) {
   broom::tidy(fit, par_type='varying') %>%
     dplyr::tbl_df() %>%
-    dplyr::mutate(cell_id=as.numeric(level),
-           nlme_pIC50 = log10(exp(estimate))
+    dplyr::mutate(cell_id=as.numeric(.data$level),
+           nlme_pIC50 = log10(exp(.data$estimate))
     ) %>%
-    dplyr::select( -group, -level, -estimate) %>%
-    dplyr::arrange(cell_id)
+    dplyr::select( -.data$group, -.data$level, -.data$estimate) %>%
+    dplyr::arrange(.data$cell_id)
 }

@@ -6,26 +6,30 @@
 #' @param pIC50_col name of the pIC50 column (default is pIC50)
 #'
 #' @return data frame of results
+#' @importFrom rlang .data
 #' @export
 #'
 #' @examples
 #' NULL
 lm_method <- function(df, pIC50_col='pIC50') {
 
+  pIC50_col <- rlang::enquo(pIC50_col)
+
   cleaned_df <- dplyr::rename(df, est_pIC50=!!pIC50_col) %>%
-      dplyr::select(cell_id, gene, est_pIC50)
+      dplyr::select(.data$cell_id, .data$gene, .data$est_pIC50)
 
   lm_fit <- stats::lm(est_pIC50 ~ gene, data=cleaned_df)
 
   out1 <- lm_fit %>%
     broom::tidy() %>%
-    dplyr::filter(term=='gene') %>%
-    dplyr::transmute(term, beta_estimate=estimate, beta_std_err=std.error, beta_pval=p.value)
+    dplyr::filter(.data$term=='gene') %>%
+    dplyr::transmute(.data$term, beta_estimate=.data$estimate,
+                     beta_std_err=.data$std.error, beta_pval=.data$p.value)
 
   out2 <- lm_fit %>%
     broom::glance() %>%
-    dplyr::transmute(test_rsq=r.squared, test_stat=statistic,
-                     test_pval=p.value, test_df=df.residual)
+    dplyr::transmute(test_rsq=.data$r.squared, test_stat=.data$statistic,
+                     test_pval=.data$p.value, test_df=.data$df.residual)
 
   dplyr::bind_cols(out1,out2) %>%
     dplyr::mutate(method='lm_method')

@@ -12,7 +12,7 @@
 nlme_gene_method <- function(df) {
 
   cleaned_df <- df %>%
-    dplyr::select(cell_id, gene, pIC50, dr_data) %>%
+    dplyr::select(.data$cell_id, .data$gene, .data$pIC50, .data$dr_data) %>%
     tidyr::unnest()
 
   m0 <- nlme_fit(cleaned_df)
