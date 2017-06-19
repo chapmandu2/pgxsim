@@ -15,8 +15,12 @@ nlme_gene_method <- function(df) {
     dplyr::select(.data$cell_id, .data$gene, .data$pIC50, .data$dr_data) %>%
     tidyr::unnest()
 
-  m0 <- nlme_fit(cleaned_df)
-  m1 <- nlme_gene_fit(cleaned_df)
+  m0 <- purrr::possibly(nlme_fit, NULL)(cleaned_df)
+  m1 <- purrr::possibly(nlme_gene_fit, NULL)(cleaned_df)
+
+  if(!inherits(m0, 'nlme') | !inherits(m1, 'nlme')) {
+    return(broom::tidy(NULL))
+  }
 
   test_stat <- -2*m0$logLik+2*m1$logLik
   test_pval <- 1-stats::pchisq(test_stat,1)

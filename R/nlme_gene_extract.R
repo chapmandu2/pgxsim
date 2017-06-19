@@ -13,6 +13,7 @@
 #' fit
 #' nlme_gene_extract(fit)
 nlme_gene_extract <- function(fit) {
+  if(!inherits(fit, 'nlme')) {return(broom::tidy(NULL))}
   broom::tidy(fit, effects='fixed') %>%
     dplyr::filter(.data$term=='b') %>%
     dplyr::transmute(.data$term, beta_estimate=log10(exp(.data$estimate)),

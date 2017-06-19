@@ -12,7 +12,7 @@ complete_df <- crossing(fixed_df, varying_df, sim_rep=c(1:3)) %>%
   dplyr::mutate(sim_unique_id=row_number())
 
 sim_cl_data <- complete_df %>%
-  dplyr::sample_n(20) %>%
+#  dplyr::sample_n(10) %>%
   dplyr::mutate(cl_data=purrr::pmap(.l=list(n=n, type=type, prop=prop), .f=sim_cell_lines)) %>%
   tidyr::unnest() %>%
   dplyr::select(-cl_sd_prop, -cl_sd_add) %>%

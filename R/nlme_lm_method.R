@@ -17,8 +17,10 @@ nlme_lm_method <- function(df) {
 
   nlme_results <- cleaned_df %>%
     tidyr::unnest() %>%
-    nlme_fit() %>%
+    purrr::possibly(nlme_fit, NULL)() %>%
     nlme_extract()
+
+  if(nrow(nlme_results)==0) {return(broom::tidy(NULL))}
 
   combined_df <- cleaned_df %>%
     dplyr::select(-.data$dr_data) %>%

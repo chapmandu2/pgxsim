@@ -13,6 +13,7 @@
 #' fit
 #' nlme_extract(fit)
 nlme_extract <- function(fit) {
+  if(!inherits(fit, 'nlme')) {return(broom::tidy(NULL))}
   broom::tidy(fit, par_type='varying') %>%
     dplyr::tbl_df() %>%
     dplyr::mutate(cell_id=as.numeric(.data$level),

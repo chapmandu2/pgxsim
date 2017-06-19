@@ -22,13 +22,13 @@ complete_df  #one row per simulation
 do_simulation_type2(complete_df[1:3,])
 
 #do in parallel with more sims
-parallel_sim_df <- crossing(fixed_df, varying_df, sim_rep=c(1:40)) %>%
+parallel_sim_df <- crossing(fixed_df, varying_df, sim_rep=c(1:30)) %>%
   dplyr::mutate(sim_unique_id=row_number(),
                 batch=sample(1:16, n(), replace = TRUE))
 parallel_sim_df #note that the batch column determines how the simulations are grouped
 
 #going to make use of subset_apply function which is used as follows:
-res <- subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2)
+#res <- subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2)
 
 library(BatchJobs)
 
