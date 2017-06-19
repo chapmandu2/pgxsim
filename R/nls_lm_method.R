@@ -9,7 +9,13 @@
 #' @export
 #'
 #' @examples
-#' NULL
+#' data("sim_ex1_data")
+#' dat <- sim_ex1_data$data[[1]]
+#' dat
+#' nls_lm_method(dat)
+#'
+#' library(tidyverse)
+#' purrr::map(sim_ex1_data$data, nls_lm_method) %>% dplyr::bind_rows()
 nls_lm_method <- function(df) {
 
   cleaned_df <- df %>%

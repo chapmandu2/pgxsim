@@ -17,5 +17,11 @@ Estimate pIC50 values for each cell line using non-linear mixed model
 then do linear regression
 }
 \examples{
-NULL
+data("sim_ex1_data")
+dat <- sim_ex1_data$data[[1]]
+dat
+nlme_lm_method(dat)
+
+library(tidyverse)
+purrr::map(sim_ex1_data$data, nlme_lm_method) \%>\% dplyr::bind_rows()
 }

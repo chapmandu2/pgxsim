@@ -9,6 +9,8 @@
 \alias{drc_data_small}
 \alias{drc_data_large}
 \alias{parallel_res_df}
+\alias{sim_ex1_df}
+\alias{sim_ex1_data}
 \title{Example datasets for the pgxsim package}
 \description{
 The pgxsim package has the following example datasets:
@@ -19,6 +21,8 @@ The pgxsim package has the following example datasets:
  \item{pIC50_data_large}{pIC50 data simulated for \link{cell_lines_large} (100 cell lines) with a genetic coefficient of 1}
  \item{drc_data_small}{Dose response data simulated for \link{pIC50_data_small} (10 cell lines)}
  \item{drc_data_large}{Dose response data simulated for \link{pIC50_data_large} (100 cell lines)}
- \item{parallel_res_df}{Parallelised simulations results dataset for vignette)}
+ \item{parallel_res_df}{Parallelised simulations results dataset for vignette}
+ \item{sim_ex1_df}{Data frame defining example set of simulations}
+ \item{sim_ex1_data}{Simulated dose response data from sim_ex1_df}
  }
 }

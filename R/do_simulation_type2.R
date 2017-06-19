@@ -4,13 +4,25 @@
 #' between simulations.  Test level statistics are calculated.
 #'
 #' @param df data frame containing columns named by parameter
+#' @param output specify what to return: `results` for a data frame of results (default),
+#' `data` to simulate data only or 'both' for a list containing both results and data
 #'
 #' @return data frame
 #' @export
 #'
 #' @examples
-#' NULL
-do_simulation_type2 <- function(df) {
+#'
+#' \dontrun{
+#' data(sim_ex1_df)
+#' do_simulation_type2(sim_ex1_df) #just return results
+#' do_simulation_type2(sim_ex1_df, output='data') #just simulate dose response data
+#' do_simulation_type2(sim_ex1_df, output='both') #return results and simulated data
+#' }
+do_simulation_type2 <- function(df, output='results') {
+
+  if(!output %in% c('results', 'data', 'both')) {
+    stop('output should be either results, data or both')
+  }
 
   #simulate cell lines new method
   sim_cl_data <- df %>%
@@ -49,6 +61,8 @@ do_simulation_type2 <- function(df) {
     dplyr::group_by(.data$sim_unique_id) %>%
     tidyr::nest()
 
+  if(output == 'data') {return(input_df)}
+
   #apply different methods and gather the results
   res_df <- input_df %>%
     dplyr::mutate(lm_res=purrr::map(.data$data, lm_method),
@@ -60,5 +74,9 @@ do_simulation_type2 <- function(df) {
     tidyr::unnest() %>%
     dplyr::select(-.data$func)
 
-  return(res_df)
+  if(output == 'results') {
+    return(res_df)
+  } else {
+    return(list(data=input_df, results=res_df))
+  }
 }

@@ -8,7 +8,13 @@
 #' @export
 #'
 #' @examples
-#' NULL
+#' data("sim_ex1_data")
+#' dat <- sim_ex1_data$data[[1]]
+#' dat
+#' nlme_gene_method(dat)
+#'
+#' library(tidyverse)
+#' purrr::map(sim_ex1_data$data, nlme_gene_method) %>% dplyr::bind_rows()
 nlme_gene_method <- function(df) {
 
   cleaned_df <- df %>%

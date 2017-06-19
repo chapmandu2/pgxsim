@@ -16,5 +16,8 @@ an object of class `nlme` representing the nonlinear mixed-effects model fit.
 Fit a dose response curve using \pkg{nlme} and including the genetic effect as a covariate
 }
 \examples{
-#
+data(drc_data_small)
+fit <- nlme_gene_fit(drc_data_small)
+fit
+nlme_gene_extract(fit)
 }

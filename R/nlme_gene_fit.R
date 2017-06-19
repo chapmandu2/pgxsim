@@ -8,7 +8,10 @@
 #' @export
 #'
 #' @examples
-#' #
+#' data(drc_data_small)
+#' fit <- nlme_gene_fit(drc_data_small)
+#' fit
+#' nlme_gene_extract(fit)
 nlme_gene_fit <- function(df) {
   df <- nlme::groupedData(resp~conc|cell_id,data=df)
   nlme::nlme(resp~1-conc/(exp(ic50 + b*gene)+conc),

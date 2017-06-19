@@ -15,8 +15,16 @@ lm_method(df, pIC50_col = "pIC50")
 data frame of results
 }
 \description{
-Simple linear regression and return output in standardised form
+Simple linear regression and return output in standardised form.  Requires a data frame
+containing a column named gene and a column containing pIC50 data whose name can be
+specified using the `pIC50_col` parameter
 }
 \examples{
-NULL
+data("pIC50_data_small")
+lm_method(pIC50_data_small)
+
+data("sim_ex1_data")
+dat <- sim_ex1_data$data[[1]]
+dat
+lm_method(dat)
 }

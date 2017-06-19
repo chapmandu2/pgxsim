@@ -4,10 +4,13 @@
 \alias{do_simulation_type2}
 \title{Do Type 2 Simulation}
 \usage{
-do_simulation_type2(df)
+do_simulation_type2(df, output = "results")
 }
 \arguments{
 \item{df}{data frame containing columns named by parameter}
+
+\item{output}{specify what to return: `results` for a data frame of results (default),
+`data` to simulate data only or 'both' for a list containing both results and data}
 }
 \value{
 data frame
@@ -17,5 +20,11 @@ In this simulation data is simulated from scratch for each iteration, ie no data
 between simulations.  Test level statistics are calculated.
 }
 \examples{
-NULL
+
+\dontrun{
+data(sim_ex1_df)
+do_simulation_type2(sim_ex1_df) #just return results
+do_simulation_type2(sim_ex1_df, output='data') #just simulate dose response data
+do_simulation_type2(sim_ex1_df, output='both') #return results and simulated data
+}
 }
