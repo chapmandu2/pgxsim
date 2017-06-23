@@ -223,7 +223,7 @@ ggplot(final_df, aes(as.factor(round(beta,2)), -log10(test_pval), colour=method)
   theme_bw()
 ```
 
-# Batch and Parallel Processing
+# Batch Processing
 
 ## Wrapper function
 
@@ -238,7 +238,7 @@ do_simulation_type2(complete_df[1,])
 do_simulation_type2(complete_df[1:2,])
 ```
 
-## Batch processing 
+## More simulations 
 
 As we saw before, we really need more repeats of each simulation to understand
 how each method is performing.  The code below defines and runs 20 repeats per simulation
@@ -250,13 +250,15 @@ large_sim_df <- crossing(fixed_df, varying_df, sim_rep=c(1:20)) %>%
 large_sim_results <- do_simulation_type2(large_sim_df)
 ```
 
-## Parallel processing
+# Parallel processing
+
+## Introduction
 
 The wrapper function makes it easy to define and run larger simulation experiments, however the time taken to do this becomes limiting.  There are many additional parameters to explore and each simulation would have to be repeated 100s or 1000s of times for a power calculation.  The simulation speed is dictated by number of cell lines in each simulation,  and the total number of simulations.
 
-However, since each simulateion is independent of the others, parallelisation is the obvious way forward.  In the example below, the BatchJobs package is used since this allows the same code to be run in a number of different computing environments, from multicore processing on a workstation or laptop, to 1000s of cores across a cluster or cloud environment.
+However, since each simulation is independent of the others, parallelisation is the obvious way forward.  In this section, the [batchtools](https://cran.r-project.org/package=batchtools) package is used since this allows the same code to be run in a number of different computing environments, from multicore processing on a workstation or laptop, to 1000s of cores across a cluster or cloud environment.
 
-### Define simulations
+## Define simulations
 
 The same principle as before is used to define the simulations, the difference is that an additional column `batch` column is added which defines how the simulations are grouped together.  In this case 16 batches are created to be split across however many cores are available.  This number can be varied depending on the number of cores available and the number of simulations to be done.
 
@@ -273,61 +275,67 @@ The `subset_apply` function is used to split the simulation definition data fram
 subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2)
 ```
 
-### Configure BatchJobs environment
+## Configure batchtools environment
 
-The code below configures BatchJobs to run on a MacOS or Linux computer.  Alternative `makeClusterFunctions` options are available for common job schedulers.
+First define where batchtools is to run.  In the code below subdirectories of the temporary directory are created with randomised names - it's important to ensure that there are no special characters in the filepath.
 
 ```{r, eval=FALSE}
 
-library(BatchJobs)
-setConfig(cluster.functions=makeClusterFunctionsMulticore(ncpus=8))
+library(batchtools)
 bjwork_dir <- file.path(tempdir(), sample(LETTERS, 10) %>% paste(., collapse=''))
 bjfiles_dir <- file.path(tempdir(), sample(LETTERS, 10) %>% paste(., collapse=''))
 dir.create(bjwork_dir)
-dir.create(bjfiles_dir)
-bj_resources <- list()
 
 ```
 
-Next the BatchJobs registry is created, being sure to define the packages that are needed:
+Next the batchtools registry is created, being sure to define the packages that are needed:
 
 ```{r, eval=FALSE}
-reg <- makeRegistry(id="BatchJobs",
-                    packages=c('pgxsim', 'tidyverse'),
+reg <- makeRegistry(packages=c('pgxsim', 'tidyverse'), #packages to include
                     work.dir = bjwork_dir,
-                    file.dir = bjfiles_dir)
+                    file.dir = bjfiles_dir,
+                    make.default=FALSE)
 
 ```
 
-### Run the parallelised analysis
+Then configure the parallelisation environment.  The code below configures batchtools to run on a MacOS or Linux computer, or single AWS instance.  Alternative `makeClusterFunctions` options are available for common job schedulers for use in an HPC environment.
+
+```{r, eval=FALSE}
+
+reg$cluster.functions = makeClusterFunctionsMulticore(ncpus = parallel::detectCores())
+
+```
+
+## Run the parallelised analysis
 
 The jobs are created using the batchMap function - each batch id is mapped to the `subset_apply` function including the analysis wrapper function and simulation specification data frame as additional arguments:  
 
 ```{r, eval=FALSE}
-batchMap(reg, fun=subset_apply, k=1:max(parallel_sim_df$batch),
+batchMap(reg=reg, fun=subset_apply, k=1:max(parallel_sim_df$batch),
          more.args=list(df=parallel_sim_df, my_fun=do_simulation_type2))
 ```
 
 The jobs are then submitted.  In a cluster environment the resources variable can define how much resource is required for each job but this can be left empty here:
 
 ```{r, eval=FALSE}
-submitJobs(reg, resources = bj_resources)
+submitJobs(reg=reg, resources = list())
 ```
 
 The jobs can be monitored until done:
 
 ```{r, eval=FALSE}
-showStatus(reg)
-done <- findDone(reg)
-job_info <- getJobInfo(reg)
+getStatus(reg = reg)
+done <- findDone(reg=reg)
+job_tab <- getJobTable(reg=reg)
+
 ```
 
-### Process the results and tidy up
+## Process the results and tidy up
 
 Once the jobs are all finished the output from each can be retrieved and combined:
 
 ```{r, eval=FALSE}
-parallel_res <- reduceResultsList(reg, findDone(reg))
+parallel_res <- reduceResultsList(reg=reg, ids=findDone(reg=reg))
 parallel_res_df <- dplyr::bind_rows(parallel_res) %>%
   dplyr::inner_join(parallel_sim_df, by='sim_unique_id')
 ```
@@ -335,10 +343,10 @@ parallel_res_df <- dplyr::bind_rows(parallel_res) %>%
 And the registry removed to clean up behind us:
 
 ```{r, eval=FALSE}
-removeRegistry(reg, ask='no')
+removeRegistry(reg=reg, wait=0)
 ```
 
-### Visualise the results
+## Visualise the results
 
 ```{r, include=FALSE}
 data(parallel_res_df)
@@ -351,11 +359,29 @@ ggplot(parallel_res_df, aes(as.factor(round(beta,2)), -log10(test_pval), colour=
   theme_bw()
 ```
 
-Now we see more clearly what we would expect, that all methods perform better when the effect size is large and the proportion of cell lines with the genetic mutation is high.  The `nls_lm` method seems weaker than the mixed-effects based methods.
+Now we see more clearly what we would expect, that all methods perform better when the effect size is large and the proportion of cell lines with the genetic mutation is high.  The `nls_lm` method seems to do less well than the mixed-effects based methods.
+
+## More about cloud computing and clusters
+
+### Amazon Web Services
+
+In our work, we have used high specification [Amazon Web Service instance types](https://aws.amazon.com/ec2/pricing/on-demand/) to run larger simulations.  At the time of writing, the c4.8xlarge instance type with 36 cores and 60Gb memory offers the best balance of cost-effectiveness and compute capacity for the simulations described here.  Larger, more powerful instances are available, for example the x1.32xlarge instance has 128 cores and 3x the compute capacity but is 8x more expensive since it is optimised for large in-memory applications and has a almost 2Tb RAM.  
+
+It is remarkably simple to provision an EC2 instance with R and RStudio server installed.  Instances can be launched based on community Amazon Machine Images (AMI's) which do 90% of the hard work, all that is then left is to install the pgxsim package and its dependencies.  Once set up, the instance can be turned into an AMI for future use, or alternatively the instance can be stopped and started as required.  Remember that billing is to the nearest whole hour though!
+
+For more information on using Amazon Web Services, see the resources below:
+
+- [Louis Aslett RStudio AMI's](http://www.louisaslett.com/RStudio_AMI/)
+- [RStudio in the cloud by Matt Strimas-Mackey](http://strimas.com/r/rstudio-cloud-1/
+)
+
+### HPC
+
+The ultimate environment to work in is a cluster where potentially 1000s of cores might be available.  This requires a little more configuration based on what job scheduler is installed, but batchtools makes this quite straightforward and the only thing that needs to be modified in the code in this vignette is the `makeClusterFunctions...` call used and the list of resources in the `submitJobs` call.
 
 # Conclusion
 
-This vignette has described the principles required to run large scale pharmacogenomic simulation studies in a parallelised computing environment. 
+This vignette has described how to run large scale pharmacogenomic simulation studies in a parallelised computing environment. 
 
 # Session Info
 ```{r}
