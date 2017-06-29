@@ -29,12 +29,15 @@ nlme_gene_method <- function(df) {
   }
 
   test_stat <- -2*m0$logLik+2*m1$logLik
-  test_pval <- 1-stats::pchisq(test_stat,1)
+  test_pval <- stats::pchisq(test_stat,1,lower.tail=FALSE)
+  test_log10pval <- -log10(test_pval)
+
 
   nlme_gene_extract(m1) %>%
     dplyr::mutate(test_rsq = NA,
                   test_stat = test_stat,
                   test_pval = test_pval,
+                  test_log10pval = test_log10pval,
                   test_df = NA,
                   method='nlme_gene')
 

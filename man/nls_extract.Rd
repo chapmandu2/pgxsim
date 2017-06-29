@@ -4,10 +4,18 @@
 \alias{nls_extract}
 \title{Extract pIC50s From nls}
 \usage{
-nls_extract(fit)
+nls_extract(fit, lower_trunc = 3, upper_trunc = 3)
 }
 \arguments{
 \item{fit}{output from \code{\link{nls_fit}}}
+
+\item{lower_trunc}{number of log10 units below the minimum concentration in the dose response
+curve to truncate the pIC50 to.  Default is 3, ie pIC50 below -6 not allowed if minimum concentration
+is 0.001uM.}
+
+\item{upper_trunc}{number of log10 units above the maximum concentration in the dose response
+curve to truncate the pIC50 to.  Default is 3, ie pIC50 above 4 not allowed if maximum concentration
+is 10uM.}
 }
 \value{
 data frame of values

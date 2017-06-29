@@ -23,7 +23,7 @@ nls_lm_method <- function(df) {
 
   nls_results <- cleaned_df %>%
     dplyr::mutate(fit=purrr::map(.data$dr_data, nls_fit),
-                  res=purrr::map(.data$fit, nls_extract)) %>%
+                  res=purrr::map(.data$fit, nls_extract, lower_trunc=3, upper_trunc=3)) %>%
     dplyr::select(-.data$dr_data,-.data$fit) %>%
     tidyr::unnest()
 

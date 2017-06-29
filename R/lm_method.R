@@ -32,12 +32,14 @@ lm_method <- function(df, pIC50_col='pIC50') {
     broom::tidy() %>%
     dplyr::filter(.data$term=='gene') %>%
     dplyr::transmute(.data$term, beta_estimate=.data$estimate,
-                     beta_std_err=.data$std.error, beta_pval=.data$p.value)
+                     beta_std_err=.data$std.error, beta_pval=.data$p.value,
+                     beta_log10pval=-log10(.data$p.value))
 
   out2 <- lm_fit %>%
     broom::glance() %>%
     dplyr::transmute(test_rsq=.data$r.squared, test_stat=.data$statistic,
-                     test_pval=.data$p.value, test_df=.data$df.residual)
+                     test_pval=.data$p.value, test_log10pval=-log10(.data$p.value),
+                     test_df=.data$df.residual)
 
   dplyr::bind_cols(out1,out2) %>%
     dplyr::mutate(method='lm_method')
