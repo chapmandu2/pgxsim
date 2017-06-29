@@ -14,7 +14,8 @@ data frame of results
 }
 \description{
 Estimate pIC50 for each cell line using non-linear least squares then do linear
-regression
+regression.  Two results are generated, one where the estimated pIC50 is truncated to the max/min of the
+dose response curve (nls_fit_t0), and one where it is truncated to 3 units above/below the max/min (nls_lm).
 }
 \examples{
 data("sim_ex1_data")
