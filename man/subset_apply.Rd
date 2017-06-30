@@ -4,7 +4,7 @@
 \alias{subset_apply}
 \title{Subset and Apply Function}
 \usage{
-subset_apply(k, df, my_fun)
+subset_apply(k, df, my_fun, seed = NULL)
 }
 \arguments{
 \item{k}{batch id to select}
@@ -12,13 +12,23 @@ subset_apply(k, df, my_fun)
 \item{df}{data frame to subset}
 
 \item{my_fun}{function to apply}
+
+\item{seed}{seed value to add to batch id, makes simulations reproducible.  Default is NULL, don't set seed.}
 }
 \value{
 output of function my_fun
 }
 \description{
-Subset a data frame and apply a function to that portion of it
+Subset a data frame and apply a function to that portion of it defined by a column named batch
 }
 \examples{
-NULL
+test_df <- data.frame(batch=1:10, x=rnorm(10))
+test_df
+test_fun <- function(df) {df$y <- df$x * rnorm(1); return(df)}
+test_fun(test_df)
+test_fun(test_df[1:3,])
+subset_apply(1, test_df, test_fun)
+subset_apply(1, test_df, test_fun)
+subset_apply(1, test_df, test_fun, seed=1001)
+subset_apply(1, test_df, test_fun, seed=1001)
 }

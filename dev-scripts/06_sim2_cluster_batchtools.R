@@ -29,7 +29,11 @@ parallel_sim_df <- crossing(fixed_df, varying_df, sim_rep=c(1:40)) %>%
 parallel_sim_df #note that the batch column determines how the simulations are grouped
 
 #going to make use of subset_apply function which is used as follows:
-#res <- subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2)
+#res1 <- subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2)
+#res2 <- subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2, seed=1001)
+#identical(res1,res2)
+#res3 <- subset_apply(k=1, df=parallel_sim_df, my_fun=do_simulation_type2, seed=1001)
+#identical(res2,res3)
 
 library(batchtools)
 
@@ -54,11 +58,11 @@ reg$cluster.functions = makeClusterFunctionsMulticore(ncpus = 8)
 
 #map
 batchMap(reg=reg, fun=subset_apply, k=1:max(parallel_sim_df$batch),
-         more.args=list(df=parallel_sim_df, my_fun=do_simulation_type2))
+         more.args=list(df=parallel_sim_df, my_fun=do_simulation_type2, seed=1001))
 #submitJobs(reg)
 submitJobs(reg=reg, resources = bj_resources)
 getStatus(reg = reg)
-done <- findDone(reg)
+done <- findDone(reg=reg)
 job_tab <- getJobTable(reg=reg)
 
 
